@@ -43,10 +43,12 @@
 - **단어장** — 예문·메모가 있는 핵심 단어 약 900개, 검색과 주제별 보기, 명사 격변화·동사 활용표
 - **학습 통계** — 30일 XP, 12주 히트맵, 7일 복습 예보, 단원별 진행
 - **오프라인·앱 설치(PWA)** — 홈 화면에 설치하면 인터넷 없이도 학습
+- **발음 음성** — 단어·예문·회화 등 4,267개 문장을 AI 튀르키예어 음성으로 미리 녹음(회화는 남녀 목소리), 음성 인식기로 발음 검사를 통과한 것만 사용, 오프라인 보관(약 28MB)
 
 ## 사용 팁
 
-- 발음은 기기의 음성 합성(TTS)을 씁니다. 튀르키예어 음성이 없으면 앱의 **설정 → 튀르키예어 음성 설치 방법**을 따라 설치하세요.
+- 발음은 미리 녹음한 음성 파일로 재생돼서 기기와 상관없이 같은 소리가 나요. 지하철처럼 연결이 약한 곳에서 쓰려면 **설정 → 오프라인 음성 내려받기**를 해 두세요.
+- 문법 드릴의 활용형처럼 녹음이 없는 표현은 기기에 튀르키예어 음성이 있을 때만 읽어 줍니다(설정 → 보조 음성).
 - 학습 기록은 브라우저(localStorage)에만 저장됩니다. 기기를 바꿀 때는 **설정 → 백업 내보내기/불러오기**를 쓰세요.
 
 ## 개발
@@ -57,15 +59,21 @@
 npm test          # 핵심 로직·데이터 테스트 (Node 20+)
 npm run serve     # http://localhost:5173 (Python 필요, 오프라인 테스트는 ?sw=1)
 npm run build:sw  # 파일을 추가·삭제했거나 버전을 올린 뒤 sw.js 다시 만들기
+node scripts/audio.mjs texts   # 데이터를 고친 뒤: 녹음할 문장 목록
+node scripts/audio.mjs index   # 음성 파일을 만든 뒤: audio/index.json 갱신
 ```
 
 ```
 index.html, css/app.css
 js/app.js               라우터·앱 셸
-js/core/                채점(tr), 한글 표기(hangul), FSRS(srs), 덱(deck), 저장(store), 음성(tts), UI
-js/data/                단어(vocab-*.js), 커리큘럼, 알파벳, 오늘의 표현
-js/views/               화면(홈·학습·레슨·복습·연습·단어장·알파벳·설정)
+js/core/                채점(tr), 한글 표기(hangul), FSRS(srs), 덱(deck), 저장(store), 음성(tts·audiokey), UI
+js/data/                단어(vocab-*.js), 커리큘럼, 알파벳, 회화, 표현집, 오늘의 표현
+js/views/               화면(홈·학습·레슨·복습·연습·단어장·알파벳·회화·설정)
+audio/                  녹음 음성(mp3)과 목록(index.json)
+tools/tts/              녹음 음성 생성·검사 도구(Python) — 자세한 내용은 tools/tts/README.md
 tests/                  node:test 테스트
 ```
+
+녹음 음성은 [VoxCPM2](https://huggingface.co/openbmb/VoxCPM2)(Apache-2.0)로 만들었습니다. 여성 목소리는 튀르키예어 전용 모델 [FreyaTTS-small](https://github.com/freyavoiceai/FreyaTTS)(Apache-2.0)의 기본 목소리(Leyla)에서 출발했고, 남성 목소리는 음성 디자인으로 만든 가상의 목소리입니다. 사람의 녹음을 가져와 목소리를 복제하지 않았습니다.
 
 `main` 브랜치에 푸시하면 GitHub Actions가 테스트 후 GitHub Pages로 배포합니다. 버전별 변경 사항은 [CHANGELOG.md](CHANGELOG.md)에 있습니다.

@@ -1,8 +1,8 @@
 // 첫 실행 안내: 소개 → 목적 → 하루 목표 → 음성 확인 → 시작 지점
 import { h, icon, speakBtn, setKids } from '../core/ui.js';
 import { state, commit } from '../core/store.js';
-import { hasTurkishVoice, ttsSupported, onVoicesChanged, speak } from '../core/tts.js';
-import { voiceGuide } from './settings.js';
+import { speechAvailable, onVoicesChanged, speak } from '../core/tts.js';
+import { HELLO } from '../data/speech.js';
 
 const PURPOSES = [
   ['travel', '✈️', '여행', '이스탄불·카파도키아에서 써먹기'],
@@ -64,10 +64,9 @@ export function renderOnboarding(root, onDone) {
     } else {
       const status = h('div');
       const renderStatus = () => {
-        const ok = ttsSupported && hasTurkishVoice();
-        status.replaceChildren(ok
-          ? h('div', { class: 'note ko' }, '✅ 튀르키예어 음성을 찾았어요. 버튼을 눌러 들어 보세요!')
-          : h('div', { class: 'note warn' }, h('div', { class: 'note-title' }, '튀르키예어 음성이 없어요'), '지금도 공부할 수 있지만, 발음을 들으려면 음성을 설치하는 걸 추천해요.', h('details', { class: 'mt-8' }, h('summary', { class: 'bold', style: { cursor: 'pointer' } }, '설치 방법 보기'), h('div', { class: 'mt-8' }, voiceGuide()))));
+        status.replaceChildren(speechAvailable()
+          ? h('div', { class: 'note ko' }, '🎧 모든 단어·예문·회화를 튀르키예어 원어민 발음의 AI 음성으로 들려줘요. 버튼을 눌러 들어 보세요!')
+          : h('div', { class: 'note warn' }, h('div', { class: 'note-title' }, '발음 음성을 불러오지 못했어요'), '인터넷에 연결되면 발음을 들을 수 있어요. 지금도 공부는 할 수 있어요.'));
       };
       renderStatus();
       const off = onVoicesChanged(renderStatus);
@@ -76,7 +75,7 @@ export function renderOnboarding(root, onDone) {
       hangulInput.addEventListener('change', () => { state.settings.hangul = hangulInput.checked; commit(); });
       body = h('div', { class: 'onb-body' },
         h('div', { class: 'onb-title' }, '소리를 확인해요'),
-        h('div', { class: 'play-row' }, speakBtn('Merhaba!', { size: 'xl' }), speakBtn('Merhaba!', { size: 'xl', slow: true })),
+        h('div', { class: 'play-row' }, speakBtn(HELLO, { size: 'xl' }), speakBtn(HELLO, { size: 'xl', slow: true })),
         h('div', { class: 'center bold', style: { fontSize: '22px' } }, 'Merhaba! ', h('span', { class: 'muted', style: { fontSize: '15px' } }, '[메르하바] 안녕하세요')),
         status,
         h('div', { class: 'list' }, h('div', { class: 'field' },
@@ -95,7 +94,7 @@ export function renderOnboarding(root, onDone) {
         nextBtn('발음·알파벳부터 시작 (추천)', () => finish('#/alphabet')),
         nextBtn('바로 1단원 시작', () => finish('#/lesson/u1l1'), 'btn-outline'),
       );
-      setTimeout(() => speak('Merhaba!'), 300);
+      setTimeout(() => speak(HELLO), 300);
     }
     setKids(wrap,
       h('div', { class: 'row between' },

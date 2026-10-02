@@ -1,17 +1,16 @@
 import { h, icon, ring, speakBtn, hangulEl } from '../core/ui.js';
 import { state, xpToday, streakNow, dayKey } from '../core/store.js';
 import { dueCount, deckStats } from '../core/deck.js';
-import { hasTurkishVoice, ttsSupported, onVoicesChanged } from '../core/tts.js';
+import { speechAvailable, onVoicesChanged } from '../core/tts.js';
 import { LESSONS } from '../data/curriculum.js';
 import { DAILY } from '../data/daily.js';
+import { GREETINGS } from '../data/speech.js';
 import { VERSION } from '../version.js';
 
 function greeting() {
   const hr = new Date().getHours();
-  if (hr >= 5 && hr < 11) return ['Günaydın!', '좋은 아침이에요 ☀️'];
-  if (hr >= 11 && hr < 17) return ['İyi günler!', '좋은 하루 보내고 계신가요?'];
-  if (hr >= 17 && hr < 22) return ['İyi akşamlar!', '좋은 저녁이에요 🌙'];
-  return ['İyi geceler!', '늦은 시간까지 공부하시네요 ✨'];
+  const g = [...GREETINGS].reverse().find(([from]) => hr >= from) || GREETINGS[GREETINGS.length - 1];
+  return [g[1], g[2]];
 }
 
 export const nextLesson = () => LESSONS.find((l) => !state.lessons[l.id]?.done) || null;
@@ -84,15 +83,16 @@ export default {
       ),
     );
 
-    // 음성 안내
+    // 음성 안내 (녹음 음성을 못 불러왔고 기기 음성도 없을 때만)
     const voiceNote = h('div');
     const renderVoiceNote = () => {
       voiceNote.replaceChildren();
-      if (!ttsSupported || !hasTurkishVoice()) {
+      if (!speechAvailable()) {
         voiceNote.append(h('div', { class: 'note warn mt-16' },
-          h('div', { class: 'note-title' }, icon('volume', 14), '튀르키예어 음성을 찾지 못했어요'),
-          '발음 듣기를 쓰려면 기기에 튀르키예어 음성을 설치해 주세요. ',
-          h('a', { href: '#/settings' }, '방법 보기'),
+          h('div', { class: 'note-title' }, icon('volume', 14), '발음 음성을 불러오지 못했어요'),
+          '인터넷에 연결되면 원어민 발음 음성이 나와요. 지하철처럼 연결이 약한 곳에서 쓰려면 ',
+          h('a', { href: '#/settings' }, '설정에서 음성을 내려받아 두세요'),
+          '.',
         ));
       }
     };

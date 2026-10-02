@@ -1,5 +1,6 @@
 // 단어 상세의 활용표: 명사 격변화·소유형, 형용사 "~이다", 동사 시제별 활용
 import { h, speakBtn } from '../core/ui.js';
+import { canSpeak } from '../core/tts.js';
 import { noun, copula, conjugate, TENSES, PERSONS, PERSON_KO, POSS_KO, personsFor } from '../core/morph.js';
 import { headKo, CASE_GLOSS } from '../core/ko.js';
 import { partsHTML } from '../core/drillgen.js';
@@ -16,11 +17,15 @@ const CASE_ROWS = [
 ];
 
 function formsGrid(rows) {
-  return h('div', { class: 'forms' }, rows.flatMap(([k, parts, ko]) => [
-    h('div', { class: 'f-k' }, k),
-    h('div', { class: 'f-v' }, h('span', { html: partsHTML(parts), style: { marginRight: '6px' } }), speakBtn(parts.map((p) => p.t).join(''), { size: 'sm' })),
-    h('div', { class: 'f-ko' }, ko),
-  ]));
+  return h('div', { class: 'forms' }, rows.flatMap(([k, parts, ko]) => {
+    const text = parts.map((p) => p.t).join('');
+    return [
+      h('div', { class: 'f-k' }, k),
+      // 활용형은 대부분 녹음이 없어서, 기기 튀르키예어 음성이 있을 때만 듣기 버튼을 둔다
+      h('div', { class: 'f-v' }, h('span', { html: partsHTML(parts), style: { marginRight: '6px' } }), canSpeak(text) ? speakBtn(text, { size: 'sm' }) : null),
+      h('div', { class: 'f-ko' }, ko),
+    ];
+  }));
 }
 
 function details(title, body, open = false) {

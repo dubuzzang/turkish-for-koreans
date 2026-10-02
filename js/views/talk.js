@@ -1,7 +1,7 @@
 // 상황별 회화: 목록 · 대화 보기(전체 듣기, 번역 가리기) · 역할 연습
 import { h, icon, speakBtn, hangulEl } from '../core/ui.js';
 import { state, commit, addXP } from '../core/store.js';
-import { speak, stopSpeaking } from '../core/tts.js';
+import { speak, stopSpeaking, prefetchSpeech } from '../core/tts.js';
 import { sttSupported } from '../core/stt.js';
 import { tokenize } from '../core/tr.js';
 import { tileDistractors } from '../core/lessonBuilder.js';
@@ -17,7 +17,7 @@ function bubble(d, [role, tr, ko], { hideKo = false, me = null } = {}) {
   const koEl = h('div', { class: `bub-ko ${hideKo ? 'blur' : ''}` }, ko);
   koEl.addEventListener('click', () => koEl.classList.remove('blur'));
   const textEl = h('div', { class: 'bub-tr', role: 'button', tabindex: '0', title: '눌러서 듣기' }, tr);
-  textEl.addEventListener('click', () => speak(tr));
+  textEl.addEventListener('click', () => speak(tr, { voice: r.voice }));
   return h('div', { class: `bub-row ${right ? 'right' : ''}` },
     h('div', { class: 'bub-av', 'aria-hidden': 'true' }, r.emoji),
     h('div', { class: 'bub' },
@@ -53,6 +53,7 @@ function list(root) {
 function detail(root, d) {
   let hideKo = false;
   let playing = 0;
+  prefetchSpeech(d.lines.map(([role, tr]) => [tr, d.roles[role].voice]));
   const chat = h('div', { class: 'chat' });
   const renderChat = () => chat.replaceChildren(...d.lines.map((l) => bubble(d, l, { hideKo })));
   renderChat();
@@ -66,7 +67,7 @@ function detail(root, d) {
       rows.forEach((r) => r.classList.remove('now'));
       rows[i].classList.add('now');
       rows[i].scrollIntoView({ block: 'center', behavior: 'smooth' });
-      await speak(d.lines[i][1]);
+      await speak(d.lines[i][1], { voice: d.roles[d.lines[i][0]].voice });
       await new Promise((r) => setTimeout(r, 350));
     }
     rows.forEach((r) => r.classList.remove('now'));
@@ -95,12 +96,13 @@ function detail(root, d) {
 }
 
 function renderLine(step, api) {
+  const { voice } = step.d.roles[step.line[0]];
   const el = h('div', { class: 'ex' },
     h('div', { class: 'ex-label' }, icon('message', 16), `${step.d.roles[step.line[0]].name}의 말`),
     h('div', { class: 'chat' }, bubble(step.d, step.line, { me: step.me })),
-    h('div', { class: 'row', style: { justifyContent: 'center' } }, speakBtn(step.line[1], { size: 'xl' }), speakBtn(step.line[1], { size: 'xl', slow: true })),
+    h('div', { class: 'row', style: { justifyContent: 'center' } }, speakBtn(step.line[1], { size: 'xl', voice }), speakBtn(step.line[1], { size: 'xl', slow: true, voice })),
   );
-  return { el, info: true, onShow: () => speak(step.line[1]) };
+  return { el, info: true, onShow: () => speak(step.line[1], { voice }) };
 }
 
 function practice(root, d, role, go) {

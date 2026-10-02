@@ -18,7 +18,7 @@ function drillList(items, audio) {
       h('div', { class: 'li-icon', style: { background: `color-mix(in srgb, ${TINT[d.id]} 15%, transparent)` } }, d.emoji),
       h('div', { class: 'li-main' },
         h('div', { class: 'li-title' }, d.title, count ? h('span', { class: 'badge bad', style: { marginLeft: '8px' } }, String(count)) : null),
-        h('div', { class: 'li-sub' }, disabled ? (d.needsMic ? '음성 인식 지원 브라우저 필요(크롬·사파리)' : '튀르키예어 음성이 필요해요') : d.desc),
+        h('div', { class: 'li-sub' }, disabled ? (d.needsMic ? '음성 인식 지원 브라우저 필요(크롬·사파리)' : '소리가 필요해요 — 인터넷 연결 또는 오프라인 음성') : d.desc),
       ),
       best ? h('span', { class: 'badge ok' }, `최고 ${Math.round(best * 100)}%`) : null,
       icon('chev-right', 20),

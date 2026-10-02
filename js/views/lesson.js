@@ -1,14 +1,17 @@
 import { h, confetti } from '../core/ui.js';
 import { state, commit, addXP } from '../core/store.js';
 import { learnWords, isLearned } from '../core/deck.js';
-import { ttsSupported, hasTurkishVoice } from '../core/tts.js';
+import { speechAvailable, prefetchSpeech } from '../core/tts.js';
 import { sttSupported } from '../core/stt.js';
 import { sfxComplete } from '../core/sfx.js';
 import { buildLessonSteps } from '../core/lessonBuilder.js';
 import { LESSON, LESSONS } from '../data/curriculum.js';
 import { runSession, renderDone, fmtDuration } from './session.js';
 
-export const canListen = () => ttsSupported && state.settings.listening !== false && hasTurkishVoice();
+export const canListen = () => state.settings.listening !== false && speechAvailable();
+
+/** 레슨·연습 단계에서 들려줄 문장 (녹음 파일 미리 받기용) */
+export const stepTexts = (steps) => steps.flatMap((s) => [s.w?.tr, s.w?.ex?.[0], s.tr, ...(s.words || []).map((w) => w.tr)]).filter(Boolean);
 
 export default {
   immersive: true,
@@ -21,6 +24,7 @@ export default {
     const reviewMode = !!prev?.done;
     const steps = buildLessonSteps(lesson, { listening: canListen(), review: reviewMode, speaking: sttSupported && state.settings.speaking !== false });
     steps.forEach((s) => { if (s.type === 'intro') s.seen = isLearned(s.w.id); });
+    prefetchSpeech(stepTexts(steps));
 
     return runSession(root, {
       steps,

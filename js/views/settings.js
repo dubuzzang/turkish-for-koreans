@@ -1,6 +1,7 @@
-import { h, icon, toast, confirmSheet, downloadText } from '../core/ui.js';
+import { h, icon, toast, confirmSheet, downloadText, speakBtn } from '../core/ui.js';
 import { state, setSetting, exportJSON, importJSON, resetAll, dayKey } from '../core/store.js';
-import { trVoices, currentVoice, setVoice, speak, onVoicesChanged, ttsSupported } from '../core/tts.js';
+import { trVoices, currentVoice, setVoice, speak, onVoicesChanged, ttsSupported, recordingCount, recordingBytes, recordingIds, audioUrl, AUDIO_CACHE } from '../core/tts.js';
+import { VOICE_SAMPLE, RATE_SAMPLE } from '../data/speech.js';
 import { VERSION, RELEASED } from '../version.js';
 
 const REPO = 'https://github.com/dubuzzang/turkish-for-koreans';
@@ -26,6 +27,98 @@ function seg(key, options, onChange) {
   return box;
 }
 
+// ---------- 오프라인 음성 (녹음 파일을 기기에 보관) ----------
+let dl = null; // 진행 중인 내려받기 — 설정 화면을 벗어나도 계속된다
+const dlListeners = new Set();
+const dlNotify = () => dlListeners.forEach((fn) => fn());
+
+async function cachedAudioIds() {
+  const c = await caches.open(AUDIO_CACHE);
+  return new Set((await c.keys()).map((r) => new URL(r.url).pathname.split('/').pop().replace(/\.mp3$/, '')));
+}
+
+async function downloadAll() {
+  if (dl) return;
+  const ids = recordingIds();
+  dl = { done: 0, total: ids.length, failed: 0, stop: false };
+  dlNotify();
+  try {
+    await navigator.storage?.persist?.();
+    const cache = await caches.open(AUDIO_CACHE);
+    const have = await cachedAudioIds();
+    const todo = ids.filter((id) => !have.has(id));
+    dl.done = ids.length - todo.length;
+    let i = 0;
+    const worker = async () => {
+      while (i < todo.length && !dl.stop) {
+        const url = new URL(audioUrl(todo[i++]), location.href).href;
+        try {
+          const res = await fetch(url, { cache: 'no-cache' });
+          if (res.ok && res.status === 200) await cache.put(url, res);
+          else dl.failed++;
+        } catch { dl.failed++; }
+        dl.done++;
+        if (dl.done % 25 === 0 || dl.done === dl.total) dlNotify();
+      }
+    };
+    await Promise.all(Array.from({ length: 6 }, worker));
+    if (dl.stop) toast('내려받기를 멈췄어요. 받은 음성은 그대로 남아 있어요');
+    else if (dl.failed) toast(`${dl.failed}개를 받지 못했어요 — 연결을 확인하고 다시 눌러 주세요`, 'bad');
+    else toast('오프라인 음성이 준비됐어요 🎧', 'ok');
+  } catch {
+    toast('저장 공간이 부족하거나 브라우저가 허용하지 않아요', 'bad');
+  }
+  dl = null;
+  dlNotify();
+}
+
+function offlineAudioCard() {
+  const box = h('div', { class: 'card' });
+  let seq = 0;
+  const render = async () => {
+    const my = ++seq;
+    const total = recordingCount();
+    if (!('caches' in window) || !total) {
+      box.replaceChildren(h('div', { class: 'bold' }, '📥 오프라인 음성'), h('p', { class: 'small text-2 mt-4' }, total ? '이 브라우저에서는 음성을 따로 보관할 수 없어요.' : '인터넷에 연결되면 내려받을 수 있어요.'));
+      return;
+    }
+    if (dl) {
+      const pct = Math.round((dl.done / Math.max(1, dl.total)) * 100);
+      box.replaceChildren(
+        h('div', { class: 'row between' }, h('div', { class: 'bold' }, '📥 음성 내려받는 중…'), h('span', { class: 'badge brand' }, `${pct}%`)),
+        h('div', { class: 'mt-8' }, h('div', { class: 'bar thin' }, h('i', { style: { width: `${pct}%` } }))),
+        h('p', { class: 'small text-2 mt-8' }, `${dl.done.toLocaleString('ko-KR')} / ${dl.total.toLocaleString('ko-KR')}개 · 다른 화면으로 가도 계속 받아요`),
+        h('button', { class: 'btn btn-outline btn-sm mt-8', type: 'button', onclick: () => { if (dl) dl.stop = true; } }, '멈추기'),
+      );
+      return;
+    }
+    const have = await cachedAudioIds();
+    if (my !== seq) return; // 그사이 더 새로 그렸으면 그만
+    const n = recordingIds().filter((id) => have.has(id)).length;
+    const full = n >= total;
+    const mb = Math.max(1, Math.round((recordingBytes() * (total - n)) / total / 1048576));
+    box.replaceChildren(
+      h('div', { class: 'bold' }, full ? '✅ 오프라인 음성 준비 완료' : '📥 오프라인 음성 내려받기'),
+      h('p', { class: 'small text-2 mt-4' }, full
+        ? `녹음 음성 ${total.toLocaleString('ko-KR')}개를 모두 기기에 보관했어요. 인터넷 없이도 발음을 들을 수 있어요.`
+        : `들었던 음성은 자동으로 보관돼요(지금 ${n.toLocaleString('ko-KR')} / ${total.toLocaleString('ko-KR')}개). 지하철·비행기에서도 들으려면 한 번에 모두 받아 두세요.`),
+      full
+        ? h('button', { class: 'btn btn-ghost btn-sm mt-8', type: 'button', onclick: async () => {
+          if (await confirmSheet('기기에 보관한 녹음 음성을 지울까요? 인터넷에 연결되면 다시 들을 수 있어요.', { title: '보관한 음성 지우기', ok: '지우기', danger: true })) {
+            await caches.delete(AUDIO_CACHE);
+            render();
+          }
+        } }, '보관한 음성 지우기')
+        : h('button', { class: 'btn btn-primary btn-block mt-12', type: 'button', onclick: () => { if (!navigator.onLine) { toast('인터넷에 연결된 뒤 눌러 주세요', 'bad'); return; } downloadAll(); } }, `모두 내려받기 (약 ${mb}MB)`),
+    );
+  };
+  render();
+  dlListeners.add(render);
+  const offIndex = onVoicesChanged(render); // 녹음 목록을 늦게 받았을 때
+  box.cleanup = () => { dlListeners.delete(render); offIndex(); };
+  return box;
+}
+
 export function voiceGuide() {
   return h('div', { class: 'col small text-2', style: { gap: '8px' } },
     h('div', null, h('b', null, '📱 아이폰·아이패드'), h('br'), '설정 → 손쉬운 사용 → 읽기 및 말하기 → 음성 → 튀르키예어 → "Yelda" 다운로드'),
@@ -41,7 +134,7 @@ function installCard() {
   const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
   const body = h('div', { class: 'card' });
   if (standalone) {
-    body.append(h('div', { class: 'bold' }, '✅ 앱으로 실행 중이에요'), h('p', { class: 'small text-2 mt-4' }, '한 번 열어 둔 내용은 인터넷 없이도 학습할 수 있어요. (발음 듣기는 기기 음성을 써요)'));
+    body.append(h('div', { class: 'bold' }, '✅ 앱으로 실행 중이에요'), h('p', { class: 'small text-2 mt-4' }, '한 번 열어 둔 내용은 인터넷 없이도 학습할 수 있어요. 발음 음성까지 모두 쓰려면 위의 "오프라인 음성"을 내려받아 두세요.'));
   } else if (window.__installPrompt) {
     body.append(
       h('div', { class: 'bold' }, '📲 홈 화면에 앱으로 설치'),
@@ -63,27 +156,35 @@ export default {
   tab: null,
   title: '설정',
   render(root) {
-    // 음성 선택
-    const voiceSel = h('select', { class: 'select', 'aria-label': '음성 선택' });
+    // 녹음 음성 상태
+    const recStatus = h('div', { class: 'f-sub' });
+    // 보조: 기기 음성 선택 (녹음이 없는 표현용)
+    const voiceSel = h('select', { class: 'select', 'aria-label': '기기 음성 선택' });
     const voiceStatus = h('div', { class: 'f-sub' });
     const renderVoices = () => {
+      const n = recordingCount();
+      recStatus.textContent = n ? `AI로 미리 녹음한 단어·문장 ${n.toLocaleString('ko-KR')}개 · 회화는 역할마다 남녀 목소리` : '녹음 음성을 불러오는 중이거나 연결이 끊겼어요';
       const vs = trVoices();
-      voiceSel.replaceChildren(h('option', { value: '' }, '자동 선택'), ...vs.map((v) => h('option', { value: v.voiceURI }, `${v.name}`)));
+      voiceSel.replaceChildren(h('option', { value: '' }, vs.length ? '자동 선택' : '없음'), ...vs.map((v) => h('option', { value: v.voiceURI }, `${v.name}`)));
       voiceSel.value = state.settings.voice || '';
       voiceSel.disabled = !vs.length;
-      voiceStatus.textContent = !ttsSupported ? '이 브라우저는 음성 합성을 지원하지 않아요' : vs.length ? `튀르키예어 음성 ${vs.length}개 · 사용 중: ${currentVoice()?.name || '-'}` : '튀르키예어 음성이 없어요 — 아래 설치 방법을 확인하세요';
+      voiceStatus.textContent = !ttsSupported || !vs.length
+        ? '녹음이 없는 표현(문법 활용형 등)은 기기에 튀르키예어 음성이 있을 때만 들려줘요'
+        : `녹음이 없는 표현을 읽을 때 써요 · 사용 중: ${currentVoice()?.name || '-'}`;
     };
-    voiceSel.addEventListener('change', () => { setVoice(voiceSel.value); setSetting('voice', voiceSel.value); renderVoices(); speak('Merhaba, nasılsınız?'); });
+    voiceSel.addEventListener('change', () => { setVoice(voiceSel.value); setSetting('voice', voiceSel.value); renderVoices(); });
     renderVoices();
     const off = onVoicesChanged(renderVoices);
+    const offline = offlineAudioCard();
 
+    // 속도: 저장값 0.9가 자연스러운 속도(1.00×)
     const rateLabel = h('span', { class: 'badge brand' });
-    const rate = h('input', { type: 'range', class: 'range', min: '0.6', max: '1.2', step: '0.05', 'aria-label': '음성 속도' });
+    const rate = h('input', { type: 'range', class: 'range', min: '0.6', max: '1.2', step: '0.05', 'aria-label': '말하기 속도' });
     rate.value = String(state.settings.rate);
-    const showRate = () => { rateLabel.textContent = `${Number(rate.value).toFixed(2)}×`; };
+    const showRate = () => { rateLabel.textContent = `${(Number(rate.value) / 0.9).toFixed(2)}×`; };
     showRate();
     rate.addEventListener('input', showRate);
-    rate.addEventListener('change', () => { setSetting('rate', Number(rate.value)); speak('Türkçe öğreniyorum.'); });
+    rate.addEventListener('change', () => { setSetting('rate', Number(rate.value)); speak(RATE_SAMPLE); });
 
     const fileInput = h('input', { type: 'file', accept: 'application/json,.json', hidden: true });
     fileInput.addEventListener('change', async () => {
@@ -111,9 +212,9 @@ export default {
 
       h('div', { class: 'section-head mt-24' }, h('div', { class: 'section-title' }, '소리')),
       h('div', { class: 'list' },
-        h('div', { class: 'field' }, h('div', { class: 'f-main' }, h('div', { class: 'f-title' }, '음성'), voiceStatus), voiceSel),
+        h('div', { class: 'field' }, h('div', { class: 'f-main' }, h('div', { class: 'f-title' }, '🎧 튀르키예어 발음 음성'), recStatus), speakBtn(VOICE_SAMPLE, { label: '음성 들어 보기' })),
         h('div', { class: 'field', style: { flexWrap: 'wrap' } },
-          h('div', { class: 'f-main' }, h('div', { class: 'f-title' }, '말하기 속도 ', rateLabel), h('div', { class: 'f-sub' }, '🐢 버튼은 이 속도의 약 60%로 읽어요')),
+          h('div', { class: 'f-main' }, h('div', { class: 'f-title' }, '말하기 속도 ', rateLabel), h('div', { class: 'f-sub' }, '1.00× = 원어민 보통 속도 · 🐢 버튼은 이 속도의 약 70%')),
           h('div', { style: { width: '100%' } }, rate),
         ),
         field('단어 자동 재생', '새 단어와 카드를 보여줄 때 바로 읽기', sw('autoplay')),
@@ -121,9 +222,12 @@ export default {
         field('효과음', '정답·오답 소리', sw('sfx')),
         field('진동', '지원하는 기기에서만', sw('vibrate')),
       ),
+      h('div', { class: 'mt-12' }, offline),
       h('details', { class: 'card flat mt-12' },
-        h('summary', { class: 'bold', style: { cursor: 'pointer' } }, '🔈 튀르키예어 음성 설치 방법'),
-        h('div', { class: 'mt-12' }, voiceGuide()),
+        h('summary', { class: 'bold', style: { cursor: 'pointer' } }, '🔈 보조 음성 (기기 음성)'),
+        h('div', { class: 'list mt-12' }, h('div', { class: 'field' }, h('div', { class: 'f-main' }, h('div', { class: 'f-title' }, '기기 튀르키예어 음성'), voiceStatus), voiceSel)),
+        h('p', { class: 'small text-2 mt-12' }, '문법 드릴의 활용형처럼 녹음이 없는 표현은 기기의 튀르키예어 음성으로 읽어요. 튀르키예어 음성이 없으면 엉터리 발음 대신 소리를 내지 않아요. 설치하려면:'),
+        h('div', { class: 'mt-8' }, voiceGuide()),
       ),
 
       h('div', { class: 'section-head mt-24' }, h('div', { class: 'section-title' }, '표시')),
@@ -164,6 +268,6 @@ export default {
         ),
       ),
     );
-    return off;
+    return () => { off(); offline.cleanup(); };
   },
 };

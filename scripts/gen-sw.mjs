@@ -10,7 +10,7 @@ const list = (dir) => readdirSync(join(ROOT, dir)).flatMap((f) => {
 });
 
 export function assetList() {
-  return ['./', 'index.html', 'manifest.webmanifest', ...list('css'), ...list('js'), ...list('icons').filter((f) => /\.(png|svg)$/.test(f))].sort();
+  return ['./', 'index.html', 'manifest.webmanifest', 'audio/index.json', ...list('css'), ...list('js'), ...list('icons').filter((f) => /\.(png|svg)$/.test(f))].sort();
 }
 
 export function version() {
@@ -22,6 +22,7 @@ export function render() {
 const VERSION = '${version()}';
 const CACHE = \`merhaba-\${VERSION}\`;
 const FONT_CACHE = 'merhaba-fonts-v1';
+const AUDIO_CACHE = 'merhaba-audio-v1'; // 녹음 음성: 버전이 바뀌어도 유지 (파일 이름이 내용마다 다름)
 const ASSETS = ${JSON.stringify(assetList(), null, 2)};
 
 self.addEventListener('install', (e) => {
@@ -31,7 +32,7 @@ self.addEventListener('install', (e) => {
 self.addEventListener('activate', (e) => {
   e.waitUntil((async () => {
     const keys = await caches.keys();
-    await Promise.all(keys.filter((k) => k.startsWith('merhaba-') && k !== CACHE && k !== FONT_CACHE).map((k) => caches.delete(k)));
+    await Promise.all(keys.filter((k) => k.startsWith('merhaba-') && ![CACHE, FONT_CACHE, AUDIO_CACHE].includes(k)).map((k) => caches.delete(k)));
     await self.clients.claim();
   })());
 });
@@ -40,11 +41,46 @@ self.addEventListener('message', (e) => {
   if (e.data === 'SKIP_WAITING') self.skipWaiting();
 });
 
+// 녹음 음성: 처음 들을 때 받아 보관하고, 오디오 요소의 범위 요청(Range)에도 보관본으로 답한다
+async function audioResponse(req) {
+  const url = new URL(req.url);
+  url.search = '';
+  const cache = await caches.open(AUDIO_CACHE);
+  let res = await cache.match(url.href);
+  if (!res) {
+    try {
+      const net = await fetch(url.href);
+      if (net.status !== 200) return net;
+      await cache.put(url.href, net.clone());
+      res = net;
+    } catch {
+      return Response.error();
+    }
+  }
+  const range = req.headers.get('range');
+  if (!range) return res;
+  const buf = await res.arrayBuffer();
+  const size = buf.byteLength;
+  const m = /bytes=(\\d*)-(\\d*)/.exec(range);
+  let start = m && m[1] ? Number(m[1]) : 0;
+  let end = m && m[2] ? Math.min(Number(m[2]), size - 1) : size - 1;
+  if (m && !m[1] && m[2]) { start = Math.max(0, size - Number(m[2])); end = size - 1; }
+  if (start >= size || start > end) return new Response(null, { status: 416, headers: { 'Content-Range': \`bytes */\${size}\` } });
+  return new Response(buf.slice(start, end + 1), {
+    status: 206,
+    headers: { 'Content-Type': 'audio/mpeg', 'Content-Length': String(end - start + 1), 'Content-Range': \`bytes \${start}-\${end}/\${size}\`, 'Accept-Ranges': 'bytes' },
+  });
+}
+
 self.addEventListener('fetch', (e) => {
   const req = e.request;
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
   if (url.origin === self.location.origin) {
+    if (/\\/audio\\/[0-9a-z]+\\.mp3$/.test(url.pathname)) {
+      e.respondWith(audioResponse(req));
+      return;
+    }
     if (req.mode === 'navigate') {
       e.respondWith(caches.match('index.html').then((hit) => hit || fetch(req)));
       return;

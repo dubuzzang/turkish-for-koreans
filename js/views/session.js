@@ -2,7 +2,7 @@
 import { h, icon, pick, confirmSheet, speakBtn, hangulEl } from '../core/ui.js';
 import { RENDERERS, diffView } from './exercises.js';
 import { sfxCorrect, sfxWrong } from '../core/sfx.js';
-import { speak, stopSpeaking } from '../core/tts.js';
+import { speak, stopSpeaking, canSpeak } from '../core/tts.js';
 import { stopListening } from '../core/stt.js';
 import { recordAnswer } from '../core/store.js';
 
@@ -117,7 +117,7 @@ export function runSession(root, cfg) {
     lastResult = res;
     record(res);
     if (res.ok) sfxCorrect(); else sfxWrong();
-    if (res.speakText && (!res.ok || SPEAK_ON_OK.has(cur.type))) setTimeout(() => speak(res.speakText), res.ok ? 150 : 350);
+    if (res.speakText && (!res.ok || SPEAK_ON_OK.has(cur.type))) setTimeout(() => speak(res.speakText, { voice: res.voice }), res.ok ? 150 : 350);
     showFeedback(res);
   }
 
@@ -133,7 +133,7 @@ export function runSession(root, cfg) {
     if (res.answer && (!res.ok || res.mine || SPEAK_ON_OK.has(cur.type))) {
       kids.push(h('div', { class: 'fb-body' },
         !res.ok ? h('div', { class: 'small text-2' }, '정답') : null,
-        h('div', { class: 'fb-answer' }, res.speakText ? speakBtn(res.speakText, { size: 'sm' }) : null, h('span', null, res.answer)),
+        h('div', { class: 'fb-answer' }, res.speakText && canSpeak(res.speakText, res.voice) ? speakBtn(res.speakText, { size: 'sm', voice: res.voice }) : null, h('span', null, res.answer)),
         res.speakText ? hangulEl(res.speakText, 'hangul tiny') : null,
         res.sub && res.sub !== res.answer ? h('div', { class: 'small text-2 mt-4' }, res.sub) : null,
       ));

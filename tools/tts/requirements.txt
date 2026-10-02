@@ -1,0 +1,9 @@
+# PyTorch는 GPU에 맞는 빌드를 먼저 설치 (예: RTX 50 시리즈는 CUDA 12.8)
+#   pip install torch torchaudio --index-url https://download.pytorch.org/whl/cu128
+voxcpm>=2.0.3
+transformers>=4.50
+librosa
+soundfile
+pyloudnorm
+imageio-ffmpeg
+numpy

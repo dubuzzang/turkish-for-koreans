@@ -1,8 +1,9 @@
 // 상황별 회화 — 여행·일상에서 그대로 쓰는 대화문. lines: [역할, 튀르키예어, 한국어]
+// roles.voice: 녹음 음성 목소리 ('f' 여성 · 'm' 남성) — '나'는 상대와 다른 목소리로 들려준다
 export const DIALOGUES = [
   {
     id: 'airport', emoji: '🛂', title: '입국 심사', tr: 'Pasaport kontrolü', level: 'A1',
-    roles: { A: { name: '심사관', emoji: '👮' }, B: { name: '나', emoji: '🙋' } },
+    roles: { A: { name: '심사관', emoji: '👮', voice: 'm' }, B: { name: '나', emoji: '🙋', voice: 'f' } },
     lines: [
       ['A', 'İyi günler. Pasaportunuz, lütfen.', '안녕하세요. 여권 주세요.'],
       ['B', 'Buyurun.', '여기 있습니다.'],
@@ -21,7 +22,7 @@ export const DIALOGUES = [
   },
   {
     id: 'taxi', emoji: '🚕', title: '택시 타기', tr: 'Taksiye binmek', level: 'A1',
-    roles: { A: { name: '나', emoji: '🙋' }, B: { name: '기사님', emoji: '🧔' } },
+    roles: { A: { name: '나', emoji: '🙋', voice: 'f' }, B: { name: '기사님', emoji: '🧔', voice: 'm' } },
     lines: [
       ['B', 'Buyurun, nereye?', '어서 오세요, 어디로 가세요?'],
       ['A', "Taksim'e, lütfen.", '탁심으로 가 주세요.'],
@@ -39,7 +40,7 @@ export const DIALOGUES = [
   },
   {
     id: 'hotel', emoji: '🏨', title: '호텔 체크인', tr: 'Otelde', level: 'A1',
-    roles: { A: { name: '프런트', emoji: '💁' }, B: { name: '나', emoji: '🙋' } },
+    roles: { A: { name: '프런트', emoji: '💁', voice: 'f' }, B: { name: '나', emoji: '🙋', voice: 'm' } },
     lines: [
       ['A', 'Hoş geldiniz! Nasıl yardımcı olabilirim?', '어서 오세요! 무엇을 도와드릴까요?'],
       ['B', 'Merhaba, rezervasyonum var. Adım Kim Minsu.', '안녕하세요, 예약했어요. 이름은 김민수예요.'],
@@ -55,7 +56,7 @@ export const DIALOGUES = [
   },
   {
     id: 'directions', emoji: '🗺️', title: '길 묻기', tr: 'Yol sormak', level: 'A1',
-    roles: { A: { name: '나', emoji: '🙋' }, B: { name: '아주머니', emoji: '👵' } },
+    roles: { A: { name: '나', emoji: '🙋', voice: 'm' }, B: { name: '아주머니', emoji: '👵', voice: 'f' } },
     lines: [
       ['A', "Affedersiniz, Galata Kulesi'ne nasıl gidebilirim?", '실례합니다, 갈라타 탑에 어떻게 가요?'],
       ['B', 'Buradan çok yakın. Düz gidin, sonra sola dönün.', '여기서 아주 가까워요. 쭉 가다가 왼쪽으로 도세요.'],
@@ -70,7 +71,7 @@ export const DIALOGUES = [
   },
   {
     id: 'restaurant', emoji: '🍽️', title: '식당에서 주문', tr: 'Lokantada', level: 'A1',
-    roles: { A: { name: '웨이터', emoji: '🤵' }, B: { name: '나', emoji: '🙋' } },
+    roles: { A: { name: '웨이터', emoji: '🤵', voice: 'm' }, B: { name: '나', emoji: '🙋', voice: 'f' } },
     lines: [
       ['A', 'Hoş geldiniz! Kaç kişisiniz?', '어서 오세요! 몇 분이세요?'],
       ['B', 'İki kişiyiz.', '두 명이에요.'],
@@ -87,7 +88,7 @@ export const DIALOGUES = [
   },
   {
     id: 'cafe', emoji: '☕', title: '카페에서', tr: 'Kafede', level: 'A1',
-    roles: { A: { name: '점원', emoji: '🧑' }, B: { name: '나', emoji: '🙋' } },
+    roles: { A: { name: '점원', emoji: '🧑', voice: 'm' }, B: { name: '나', emoji: '🙋', voice: 'f' } },
     lines: [
       ['A', 'Merhaba, ne alırsınız?', '안녕하세요, 뭘 드릴까요?'],
       ['B', 'Bir Türk kahvesi, lütfen.', '튀르키예 커피 한 잔 주세요.'],
@@ -103,7 +104,7 @@ export const DIALOGUES = [
   },
   {
     id: 'bazaar', emoji: '🧿', title: '시장에서 흥정', tr: 'Pazarlık', level: 'A2',
-    roles: { A: { name: '상인', emoji: '🧔' }, B: { name: '나', emoji: '🙋' } },
+    roles: { A: { name: '상인', emoji: '🧔', voice: 'm' }, B: { name: '나', emoji: '🙋', voice: 'f' } },
     lines: [
       ['A', 'Buyurun, bakabilirsiniz!', '어서 오세요, 구경하세요!'],
       ['B', 'Bu nazar boncuğu ne kadar?', '이 나자르 본주(악마의 눈 부적)는 얼마예요?'],
@@ -119,7 +120,7 @@ export const DIALOGUES = [
   },
   {
     id: 'clothes', emoji: '👗', title: '옷 가게', tr: 'Mağazada', level: 'A2',
-    roles: { A: { name: '점원', emoji: '🧑‍💼' }, B: { name: '나', emoji: '🙋' } },
+    roles: { A: { name: '점원', emoji: '🧑‍💼', voice: 'f' }, B: { name: '나', emoji: '🙋', voice: 'm' } },
     lines: [
       ['B', 'Bu ceketin başka rengi var mı?', '이 재킷 다른 색 있어요?'],
       ['A', 'Evet, siyah ve lacivert var. Hangi beden?', '네, 검정과 남색이 있어요. 어떤 사이즈요?'],
@@ -135,7 +136,7 @@ export const DIALOGUES = [
   },
   {
     id: 'pharmacy', emoji: '💊', title: '약국에서', tr: 'Eczanede', level: 'A2',
-    roles: { A: { name: '약사', emoji: '👩‍⚕️' }, B: { name: '나', emoji: '🙋' } },
+    roles: { A: { name: '약사', emoji: '👩‍⚕️', voice: 'f' }, B: { name: '나', emoji: '🙋', voice: 'm' } },
     lines: [
       ['A', 'Buyurun, nasıl yardımcı olabilirim?', '어서 오세요, 무엇을 도와드릴까요?'],
       ['B', 'Başım çok ağrıyor ve biraz ateşim var.', '머리가 많이 아프고 열이 조금 있어요.'],
@@ -151,7 +152,7 @@ export const DIALOGUES = [
   },
   {
     id: 'metro', emoji: '🚇', title: '교통카드와 트램', tr: 'İstanbulkart', level: 'A2',
-    roles: { A: { name: '나', emoji: '🙋' }, B: { name: '역무원', emoji: '🧑‍✈️' } },
+    roles: { A: { name: '나', emoji: '🙋', voice: 'f' }, B: { name: '역무원', emoji: '🧑‍✈️', voice: 'm' } },
     lines: [
       ['A', 'Affedersiniz, İstanbulkart nereden alabilirim?', '실례합니다, 이스탄불카드는 어디서 살 수 있어요?'],
       ['B', 'Şu otomatlardan alabilirsiniz.', '저 자판기에서 사실 수 있어요.'],
@@ -167,7 +168,7 @@ export const DIALOGUES = [
   },
   {
     id: 'meeting', emoji: '🤝', title: '첫 만남', tr: 'Tanışma', level: 'A1',
-    roles: { A: { name: '엘리프', emoji: '👩' }, B: { name: '민수', emoji: '🧑' } },
+    roles: { A: { name: '엘리프', emoji: '👩', voice: 'f' }, B: { name: '민수', emoji: '🧑', voice: 'm' } },
     lines: [
       ['A', 'Merhaba! Ben Elif. Senin adın ne?', '안녕! 나는 엘리프야. 네 이름은 뭐야?'],
       ['B', 'Merhaba Elif, benim adım Minsu. Memnun oldum.', '안녕 엘리프, 내 이름은 민수야. 반가워.'],
@@ -183,7 +184,7 @@ export const DIALOGUES = [
   },
   {
     id: 'plans', emoji: '📅', title: '약속 잡기', tr: 'Buluşma', level: 'A2',
-    roles: { A: { name: '잔', emoji: '🧑' }, B: { name: '나', emoji: '🙋' } },
+    roles: { A: { name: '잔', emoji: '🧑', voice: 'm' }, B: { name: '나', emoji: '🙋', voice: 'f' } },
     lines: [
       ['A', 'Bu cumartesi boş musun?', '이번 토요일에 시간 있어?'],
       ['B', 'Evet, boşum. Ne yapalım?', '응, 시간 돼. 뭐 할까?'],
@@ -198,7 +199,7 @@ export const DIALOGUES = [
   },
   {
     id: 'phone', emoji: '📞', title: '전화로 예약', tr: 'Telefonda', level: 'A2',
-    roles: { A: { name: '식당 직원', emoji: '🧑‍🍳' }, B: { name: '나', emoji: '🙋' } },
+    roles: { A: { name: '식당 직원', emoji: '🧑‍🍳', voice: 'm' }, B: { name: '나', emoji: '🙋', voice: 'f' } },
     lines: [
       ['A', 'Alo, Deniz Restoran, buyurun.', '여보세요, 데니즈 레스토랑입니다.'],
       ['B', 'Merhaba, bu akşam için masa ayırtmak istiyorum.', '안녕하세요, 오늘 저녁 테이블 예약하고 싶어요.'],
@@ -214,7 +215,7 @@ export const DIALOGUES = [
   },
   {
     id: 'family', emoji: '👨‍👩‍👧', title: '가족 사진', tr: 'Aile fotoğrafı', level: 'A1',
-    roles: { A: { name: '아이셰', emoji: '👩' }, B: { name: '민수', emoji: '🧑' } },
+    roles: { A: { name: '아이셰', emoji: '👩', voice: 'f' }, B: { name: '민수', emoji: '🧑', voice: 'm' } },
     lines: [
       ['A', 'Bu fotoğraftaki kim?', '이 사진에 있는 사람은 누구야?'],
       ['B', 'Bu benim annem, bu da babam.', '이분은 우리 엄마고, 이분은 우리 아빠야.'],
@@ -230,7 +231,7 @@ export const DIALOGUES = [
   },
   {
     id: 'weather', emoji: '⛅', title: '날씨 이야기', tr: 'Hava durumu', level: 'A2',
-    roles: { A: { name: '이웃 할아버지', emoji: '👴' }, B: { name: '나', emoji: '🙋' } },
+    roles: { A: { name: '이웃 할아버지', emoji: '👴', voice: 'm' }, B: { name: '나', emoji: '🙋', voice: 'f' } },
     lines: [
       ['A', 'Günaydın! Bugün hava çok güzel, değil mi?', '좋은 아침이에요! 오늘 날씨 정말 좋죠?'],
       ['B', 'Evet, çok güneşli. Ama dün çok yağmur yağdı.', '네, 아주 화창해요. 근데 어제는 비가 많이 왔어요.'],
@@ -244,7 +245,7 @@ export const DIALOGUES = [
   },
   {
     id: 'ferry', emoji: '⛴️', title: '페리 타고 관광', tr: 'Vapurda', level: 'A2',
-    roles: { A: { name: '민수', emoji: '🙋' }, B: { name: '엘리프', emoji: '👩' } },
+    roles: { A: { name: '민수', emoji: '🙋', voice: 'm' }, B: { name: '엘리프', emoji: '👩', voice: 'f' } },
     lines: [
       ['A', 'Bu vapur nereye gidiyor?', '이 페리는 어디로 가?'],
       ['B', "Kabataş'tan Kadıköy'e gidiyor. Yirmi dakika sürüyor.", '카바타시에서 카드쾨이로 가. 20분 걸려.'],

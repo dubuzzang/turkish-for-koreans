@@ -39,7 +39,7 @@ jobs:
       - name: Assemble site
         run: |
           mkdir -p _site
-          cp -r index.html manifest.webmanifest css js icons _site/
+          cp -r index.html manifest.webmanifest css js icons audio _site/
           if [ -f sw.js ]; then cp sw.js _site/; fi
           touch _site/.nojekyll
       - uses: actions/upload-pages-artifact@v5

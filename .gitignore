@@ -1,4 +1,9 @@
 node_modules/
+tools/tts/work/
+audio-src/texts.json
+__pycache__/
+.venv/
+.claude/
 _site/
 .DS_Store
 Thumbs.db

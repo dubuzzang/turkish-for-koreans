@@ -2,12 +2,12 @@
 import { h, icon, speakBtn, shuffle, sample, setKids } from '../core/ui.js';
 import { state, commit, addXP } from '../core/store.js';
 import { parseCardId } from '../core/deck.js';
-import { speak } from '../core/tts.js';
+import { speak, prefetchSpeech } from '../core/tts.js';
 import { tokenize } from '../core/tr.js';
 import { tileDistractors } from '../core/lessonBuilder.js';
 import { sfxComplete } from '../core/sfx.js';
 import { TENSES } from '../core/morph.js';
-import { numberTr, priceTr, timeTr, timeAtTr, fmtClock } from '../core/numbers.js';
+import { numberTr, priceTr, timeTr, timeAtTr, fmtClock, NUM_SETS } from '../core/numbers.js';
 import { checkAnswer } from '../core/tr.js';
 import { harmonyItem, caseItem, possItem, copulaItem, conjItem, NOUN_POOL, COPULA_POOL, VERB_POOL } from '../core/drillgen.js';
 import { WORD } from '../data/vocab.js';
@@ -15,7 +15,7 @@ import { LESSONS, LESSON } from '../data/curriculum.js';
 import { PAIRS } from '../data/alphabet.js';
 import { runSession, renderDone, fmtDuration } from './session.js';
 import { mcCore, typeCore } from './exercises.js';
-import { canListen } from './lesson.js';
+import { canListen, stepTexts } from './lesson.js';
 import { sttSupported } from '../core/stt.js';
 
 // ---------- 재료 ----------
@@ -225,12 +225,8 @@ function renderMorph(step, api) {
 
 // ---------- 숫자 · 시각 ----------
 function pickNumber(rng, range) {
-  if (range === 1) return Math.floor(rng() * 21);
-  if (range === 2) return 21 + Math.floor(rng() * 80);
-  if (range === 3) return 100 + Math.floor(rng() * 900);
-  if (range === 4) return 1000 + Math.floor(rng() * 99000);
-  const kurus = [0, 0, 25, 50, 50, 75, 90, 95][Math.floor(rng() * 8)];
-  return (1 + Math.floor(rng() * 300)) + kurus / 100;
+  const set = NUM_SETS[range] || NUM_SETS[2];
+  return set[Math.floor(rng() * set.length)];
 }
 const fmtPrice = (a) => `${Math.floor(a + 1e-9)},${String(Math.round((a - Math.floor(a + 1e-9)) * 100)).padStart(2, '0')} TL`;
 
@@ -405,7 +401,7 @@ export default {
     const d = DRILLS[id];
     if (!d) { go('#/practice'); return null; }
     if (d.needsAudio && !canListen()) {
-      emptyState(root, '🔇', '이 연습은 튀르키예어 음성이 필요해요', '설정에서 음성 설치 방법을 확인해 주세요.', [
+      emptyState(root, '🔇', '이 연습은 소리가 필요해요', state.settings.listening === false ? '설정에서 "듣기 문제 포함"을 켜 주세요.' : '인터넷에 연결하거나 설정에서 오프라인 음성을 내려받아 주세요.', [
         h('a', { class: 'btn btn-soft', href: '#/settings' }, '설정 열기'),
         h('a', { class: 'btn btn-outline', href: '#/practice' }, '돌아가기'),
       ]);
@@ -436,6 +432,7 @@ export default {
         return;
       }
       root.replaceChildren();
+      prefetchSpeech([...stepTexts(steps), ...steps.flatMap((s) => (s.pair ? [s.pair[0], s.pair[2]] : []))]);
       cleanup = runSession(root, {
         steps,
         renderers: { pair: renderPair, morph: renderMorph, num: renderNum, clock: renderClock },

@@ -83,3 +83,24 @@ export function timeDigitalTr(h, m) {
 }
 
 export const fmtClock = (h, m) => `${h}:${String(m).padStart(2, '0')}`;
+
+// 숫자 드릴이 뽑는 수 — 모두 녹음 음성이 있도록 범위마다 고정된 묶음을 쓴다
+function seeded(seed) {
+  let s = seed >>> 0;
+  return () => (s = (Math.imul(s, 1664525) + 1013904223) >>> 0) / 4294967296;
+}
+function fixedSet(seed, size, make) {
+  const r = seeded(seed), out = new Set();
+  while (out.size < size) out.add(make(r));
+  return [...out].sort((a, b) => a - b);
+}
+const KURUS = [0, 0, 25, 50, 50, 75, 90, 95];
+export const NUM_SETS = {
+  1: Array.from({ length: 21 }, (_, i) => i),
+  2: Array.from({ length: 80 }, (_, i) => 21 + i),
+  3: fixedSet(3, 160, (r) => 100 + Math.floor(r() * 900)),
+  4: fixedSet(4, 160, (r) => 1000 + Math.floor(r() * 99000)),
+  5: fixedSet(5, 160, (r) => 1 + Math.floor(r() * 300) + KURUS[Math.floor(r() * 8)] / 100),
+};
+/** 시각 드릴의 모든 시각 (1~12시, 5분 단위) */
+export const CLOCK_TIMES = Array.from({ length: 144 }, (_, i) => [1 + Math.floor(i / 12), (i % 12) * 5]);

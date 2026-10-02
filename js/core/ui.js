@@ -1,5 +1,5 @@
 // DOM 도우미 · 아이콘 · 토스트 · 바텀시트 · 공통 위젯
-import { speak, ttsSupported } from './tts.js';
+import { speak, canSpeak } from './tts.js';
 import { toHangul } from './hangul.js';
 import { state } from './store.js';
 
@@ -109,6 +109,8 @@ export function toast(msg, type = '', ms = 2400) {
     toastWrap = h('div', { class: 'toast-wrap', role: 'status', 'aria-live': 'polite' });
     document.body.append(toastWrap);
   }
+  // 같은 안내가 연달아 쌓이지 않게
+  if ([...toastWrap.children].some((c) => c.textContent === msg && !c.classList.contains('out'))) return;
   const t = h('div', { class: `toast ${type}` }, msg);
   toastWrap.append(t);
   setTimeout(() => { t.classList.add('out'); setTimeout(() => t.remove(), 300); }, ms);
@@ -208,18 +210,22 @@ export function confirmSheet(message, { ok = '확인', cancel = '취소', danger
 }
 
 // ---------- 발음 버튼·튀르키예어 표시 ----------
-export function speakBtn(text, { slow = false, size = '', label } = {}) {
+export function speakBtn(text, { slow = false, size = '', label, voice } = {}) {
   const b = h('button', {
     class: `speak-btn ${size} ${slow ? 'slow' : ''}`,
     type: 'button',
     'aria-label': label || (slow ? '천천히 듣기' : '듣기'),
     title: slow ? '천천히 듣기' : '듣기',
   }, icon(slow ? 'slow' : 'volume', size === 'xl' ? (slow ? 26 : 36) : size === 'sm' ? 18 : 22));
-  if (!ttsSupported) b.disabled = true;
   b.addEventListener('click', async (e) => {
     e.stopPropagation();
+    const t = typeof text === 'function' ? text() : text;
+    if (!canSpeak(t, voice)) {
+      toast('이 표현은 녹음 음성이 없어요 — 기기에 튀르키예어 음성을 설치하면 들을 수 있어요');
+      return;
+    }
     b.classList.add('playing');
-    await speak(typeof text === 'function' ? text() : text, { slow });
+    await speak(t, { slow, voice });
     b.classList.remove('playing');
   });
   return b;

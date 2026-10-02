@@ -93,6 +93,16 @@ export function subscribe(fn) {
 if (typeof window !== 'undefined') {
   window.addEventListener('pagehide', () => save(true));
   document.addEventListener('visibilitychange', () => { if (document.hidden) save(true); });
+  // 다른 탭에서 학습하면 이 탭의 메모리 상태도 맞춰 둔다 (덮어쓰기 방지)
+  window.addEventListener('storage', (e) => {
+    if (e.key !== KEY || !e.newValue) return;
+    try {
+      const next = migrate(JSON.parse(e.newValue));
+      Object.keys(state).forEach((k) => delete state[k]);
+      Object.assign(state, next);
+      listeners.forEach((fn) => { try { fn(state); } catch (err) { console.error(err); } });
+    } catch { /* 무시 */ }
+  });
 }
 
 // ---------- 날짜 ----------

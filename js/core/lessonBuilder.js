@@ -66,7 +66,7 @@ export function buildLessonSteps(lesson, opts = {}) {
   const unitSents = (lesson.unit?.lessons || [lesson]).flatMap((l) => l.sents || []);
   const steps = [];
 
-  if (lesson.tip && !review) steps.push({ type: 'tip', tip: lesson.tip });
+  if (lesson.tip && !review) steps.push({ type: 'tip', tip: lesson.tip, notes: lesson.notes || [] });
 
   // 1) 단어: 3~4개씩 소개 → 바로 인출
   chunk(words, 4).forEach((group, gi) => {

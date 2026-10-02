@@ -1,11 +1,13 @@
 // 커리큘럼: 단원 → 레슨. 각 레슨 = 새 단어 + 한국인 맞춤 팁 + 문법 확인 문제 + 문장 연습
 // items: 문법 확인(객관식) — a는 정답 인덱스(화면에서는 섞어서 보여줌)
 
+import { UNITS2 } from './curriculum-2.js';
+
 const b = (s) => `<b class="tr">${s}</b>`;
 
-export const UNITS = [
+const UNITS1 = [
   {
-    id: 'u1', no: 1, title: '첫 만남', tr: 'Tanışma', color: '#0e9f9a',
+    id: 'u1', no: 1, title: '첫 만남', tr: 'Tanışma', color: '#0e9f9a', notes: ['overview', 'pronouns'],
     desc: '인사, 안부, 자기소개, 예의 표현',
     lessons: [
       {
@@ -29,7 +31,7 @@ export const UNITS = [
         ],
       },
       {
-        id: 'u1l2', title: '안부 묻기', tr: 'Nasılsın?',
+        id: 'u1l2', title: '안부 묻기', tr: 'Nasılsın?', notes: ['pronouns'],
         words: ['nasilsin', 'nasilsiniz', 'iyiyim', 'tesekkurler', 'sen', 'siz', 'fena_degil', 'cok_iyi', 'ne_haber'],
         tip: {
           title: 'sen과 siz — 반말과 존댓말',
@@ -51,7 +53,7 @@ export const UNITS = [
         ],
       },
       {
-        id: 'u1l3', title: '자기소개', tr: 'Benim adım…',
+        id: 'u1l3', title: '자기소개', tr: 'Benim adım…', notes: ['copula'],
         words: ['ben', 'benim', 'ad', 'ne', 'memnun_oldum', 'koreli', 'ogrenci', 'de'],
         tip: {
           title: '이름과 국적 말하기',
@@ -97,11 +99,11 @@ export const UNITS = [
     ],
   },
   {
-    id: 'u2', no: 2, title: '나와 가족', tr: 'Ben ve ailem', color: '#7356f0',
+    id: 'u2', no: 2, title: '나와 가족', tr: 'Ben ve ailem', color: '#7356f0', notes: ['harmony', 'copula', 'question', 'demonstratives'],
     desc: '"~이에요" 접미사, 모음조화, 의문 첨사 mi, 가족 호칭, 이·그·저',
     lessons: [
       {
-        id: 'u2l1', title: '직업 말하기', tr: 'Ben öğretmenim.',
+        id: 'u2l1', title: '직업 말하기', tr: 'Ben öğretmenim.', notes: ['harmony', 'copula'],
         words: ['ogretmen', 'doktor', 'muhendis', 'asci', 'garson', 'polis', 'hemsire', 'is'],
         tip: {
           title: '모음조화 첫걸음',
@@ -124,7 +126,7 @@ export const UNITS = [
         ],
       },
       {
-        id: 'u2l2', title: '국적과 언어', tr: 'Nerelisin?',
+        id: 'u2l2', title: '국적과 언어', tr: 'Nerelisin?', notes: ['question'],
         words: ['kore', 'turkiye', 'turkce', 'korece', 'ingilizce', 'nereli', 'ulke', 'mi'],
         tip: {
           title: '의문 첨사 mi = "~니? / ~까?"',
@@ -168,7 +170,7 @@ export const UNITS = [
         ],
       },
       {
-        id: 'u2l4', title: '이건 뭐예요?', tr: 'Bu ne?',
+        id: 'u2l4', title: '이건 뭐예요?', tr: 'Bu ne?', notes: ['demonstratives'],
         words: ['bu', 'su_that', 'o', 'kim', 'bir', 'kitap', 'kalem', 'canta', 'telefon'],
         tip: {
           title: 'bu · şu · o = 이 · 그 · 저',
@@ -192,11 +194,11 @@ export const UNITS = [
     ],
   },
   {
-    id: 'u3', no: 3, title: '있다·없다, 어디에', tr: 'Var mı?', color: '#2b72e8',
+    id: 'u3', no: 3, title: '있다·없다, 어디에', tr: 'Var mı?', color: '#2b72e8', notes: ['varyok', 'locative', 'plural', 'buffer'],
     desc: 'var/yok, 장소격 -da(에/에서), 위치 표현, 복수 -lar',
     lessons: [
       {
-        id: 'u3l1', title: '있어요? 없어요?', tr: 'Var mı?',
+        id: 'u3l1', title: '있어요? 없어요?', tr: 'Var mı?', notes: ['varyok'],
         words: ['var', 'yok', 'su', 'ekmek', 'para', 'zaman', 'soru'],
         tip: {
           title: 'var = 있다, yok = 없다',
@@ -219,7 +221,7 @@ export const UNITS = [
         ],
       },
       {
-        id: 'u3l2', title: '어디에 있어요?', tr: 'Nerede?',
+        id: 'u3l2', title: '어디에 있어요?', tr: 'Nerede?', notes: ['locative', 'consonants'],
         words: ['ev', 'okul', 'otel', 'oda', 'nerede', 'burada', 'orada', 'istanbul'],
         tip: {
           title: '장소격 -da/-de = "~에(서)"',
@@ -265,7 +267,7 @@ export const UNITS = [
         ],
       },
       {
-        id: 'u3l4', title: '여럿일 때 -lar/-ler', tr: 'Kediler',
+        id: 'u3l4', title: '여럿일 때 -lar/-ler', tr: 'Kediler', notes: ['plural'],
         words: ['cocuk', 'kedi', 'kopek', 'arkadas', 'cok', 'kac', 'iki', 'uc'],
         tip: {
           title: '-lar/-ler = "-들"',
@@ -288,7 +290,7 @@ export const UNITS = [
     ],
   },
   {
-    id: 'u4', no: 4, title: '숫자와 쇼핑', tr: 'Sayılar ve alışveriş', color: '#e2700c',
+    id: 'u4', no: 4, title: '숫자와 쇼핑', tr: 'Sayılar ve alışveriş', color: '#e2700c', notes: ['accusative'],
     desc: '숫자 0~1000, 가격 묻기, 흥정, 시장 표현, 목적격 맛보기',
     lessons: [
       {
@@ -356,7 +358,7 @@ export const UNITS = [
         ],
       },
       {
-        id: 'u4l4', title: '시장에서', tr: 'Bunu istiyorum',
+        id: 'u4l4', title: '시장에서', tr: 'Bunu istiyorum', notes: ['accusative'],
         words: ['istemek', 'kilo', 'elma', 'domates', 'peynir', 'tane', 'baska', 'hepsi'],
         tip: {
           title: '목적격 -(y)ı = "을/를" (특정할 때만!)',
@@ -381,7 +383,7 @@ export const UNITS = [
     ],
   },
   {
-    id: 'u5', no: 5, title: '식당과 카페', tr: 'Lokantada', color: '#d63f7f',
+    id: 'u5', no: 5, title: '식당과 카페', tr: 'Lokantada', color: '#d63f7f', notes: ['consonants'],
     desc: '음식·음료, 주문하기, 맛 표현, -lı(~이 있는)',
     lessons: [
       {
@@ -446,7 +448,7 @@ export const UNITS = [
         ],
       },
       {
-        id: 'u5l4', title: '맛 표현', tr: 'Çok lezzetli!',
+        id: 'u5l4', title: '맛 표현', tr: 'Çok lezzetli!', notes: ['consonants'],
         words: ['lezzetli', 'tatli', 'tuzlu', 'aci', 'eksi', 'sicak', 'soguk', 'ac', 'tok'],
         tip: {
           title: '맛과 배고픔',
@@ -471,6 +473,7 @@ export const UNITS = [
   },
 ];
 
+export const UNITS = [...UNITS1, ...UNITS2];
 export const LESSONS = UNITS.flatMap((u) => u.lessons.map((l, i) => ({ ...l, unit: u, idx: i })));
 export const LESSON = new Map(LESSONS.map((l) => [l.id, l]));
 export const unitOf = (lessonId) => LESSON.get(lessonId)?.unit;

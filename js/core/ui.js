@@ -219,6 +219,15 @@ export function hangulEl(text, cls = 'hangul') {
   return h('div', { class: cls }, toHangul(text));
 }
 
+/** .tr 요소를 누르면 읽어 주기 */
+export function tapToSpeak(root) {
+  root.addEventListener('click', (e) => {
+    const el = e.target.closest('.tr');
+    if (el && root.contains(el)) speak(el.textContent.replace(/[()]/g, ''));
+  });
+  return root;
+}
+
 // ---------- 진행 링 ----------
 export function ring(value, { size = 64, stroke = 7, label = null } = {}) {
   const r = (size - stroke) / 2;

@@ -1,6 +1,8 @@
 // 문제 화면 렌더러. 각 렌더러는 { el, info?, check?(), onKey?(k), onShow?() } 를 돌려준다.
 // api: submit(result) · setReady(bool) · setMain(cfg) · done(result)
-import { h, icon, speakBtn, hangulEl, shuffle, POS_LABEL } from '../core/ui.js';
+import { h, icon, speakBtn, hangulEl, shuffle, POS_LABEL, tapToSpeak } from '../core/ui.js';
+import { openNoteSheet } from './grammar.js';
+import { NOTE } from '../data/notes.js';
 import { speak } from '../core/tts.js';
 import { state } from '../core/store.js';
 import { checkAnswer, diffChars, accentHint, normalize, trLower, TR_EXTRA } from '../core/tr.js';
@@ -21,14 +23,6 @@ export function displayToken(t) {
   return trLower(t);
 }
 
-/** .tr 요소를 누르면 읽어 주기 */
-export function tapToSpeak(root) {
-  root.addEventListener('click', (e) => {
-    const el = e.target.closest('.tr');
-    if (el && root.contains(el)) speak(el.textContent.replace(/[()]/g, ''));
-  });
-  return root;
-}
 
 function wordHeader(w, { big = true } = {}) {
   return h('div', { class: 'col', style: { gap: '4px', minWidth: 0 } },
@@ -56,6 +50,7 @@ export function renderTip(step) {
     h('h2', null, step.tip.title),
     tapToSpeak(h('div', { class: 'card prose', html: step.tip.html })),
     h('p', { class: 'small muted' }, '굵은 튀르키예어를 누르면 발음을 들을 수 있어요.'),
+    (step.notes || []).length ? h('div', { class: 'chips' }, step.notes.map((id) => h('button', { class: 'chip', type: 'button', onclick: () => openNoteSheet(id) }, `📖 ${NOTE.get(id)?.title || '문법 노트'}`))) : null,
   );
   return { el, info: true };
 }
@@ -306,7 +301,7 @@ export function diffView(mine, expected) {
   return h('span', { class: 'diff' }, d.map((x) => h('span', { class: x.miss ? 'd-miss' : x.ok ? '' : 'd-bad' }, x.ch)));
 }
 
-function typeCore({ el, answers, strict = false, multiline = false, placeholder = '튀르키예어로 입력', result }, api) {
+export function typeCore({ el, answers, strict = false, multiline = false, placeholder = '튀르키예어로 입력', result }, api) {
   const input = h(multiline ? 'textarea' : 'input', {
     class: 'type-input', autocomplete: 'off', autocapitalize: 'off', autocorrect: 'off', spellcheck: 'false',
     lang: 'tr', placeholder, enterkeyhint: 'done', 'aria-label': placeholder,
@@ -324,6 +319,7 @@ function typeCore({ el, answers, strict = false, multiline = false, placeholder 
       input.classList.add(r.ok ? 'ok' : 'bad');
       const res = { ok: r.ok, answer: r.expected, ...result };
       if (r.level === 'accent' && r.ok) res.note = `특수문자를 확인하세요: ${accentHint(input.value, r.expected) || '철자'}`;
+      if (r.level === 'accent' && !r.ok) res.note = `거의 맞았어요! 이 문제는 특수문자까지 정확해야 해요 (ı/i, ş/s …): ${accentHint(input.value, r.expected) || '철자 확인'}`;
       if (r.level === 'typo') res.note = '오타가 조금 있어요 — 철자를 확인하세요.';
       if (!r.ok || r.level !== 'exact') res.mine = input.value;
       return res;

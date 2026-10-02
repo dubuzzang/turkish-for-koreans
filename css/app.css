@@ -739,12 +739,15 @@ select.select { height: 40px; border-radius: 10px; border: 1px solid var(--borde
 .prose h3 { margin-top: 22px; font-size: 18px; }
 .prose ul { padding-left: 20px; margin: 8px 0 0; }
 .prose li + li { margin-top: 4px; }
-.prose .tr { font-weight: 700; color: var(--brand-ink); }
+.prose .tr { font-weight: 700; color: var(--brand-ink); cursor: pointer; text-decoration: underline dotted color-mix(in srgb, var(--brand) 55%, transparent); text-underline-offset: 3px; }
+.prose .tr:active { opacity: .6; }
+.ex-line .ex-gloss { word-break: break-word; }
 .gtable { width: 100%; border-collapse: separate; border-spacing: 0; border: 1px solid var(--border); border-radius: var(--r-sm); overflow: hidden; font-size: 14.5px; background: var(--surface); }
 .gtable th, .gtable td { padding: 9px 10px; text-align: left; border-top: 1px solid var(--border); vertical-align: top; }
 .gtable tr:first-child th, .gtable tr:first-child td { border-top: 0; }
 .gtable th { background: var(--surface-2); font-size: 13px; color: var(--text-2); font-weight: 750; }
-.gtable td.tr, .gtable .tr { font-weight: 700; color: var(--text); }
+.gtable td.tr, .gtable .tr { font-weight: 700; color: var(--text); white-space: nowrap; }
+.gtable th, .gtable td { overflow-wrap: normal; word-break: keep-all; }
 .table-scroll { overflow-x: auto; margin: 0 -2px; padding: 0 2px; }
 .ex-list { display: grid; gap: 8px; }
 .ex-line { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: var(--r-sm); background: var(--surface-2); }

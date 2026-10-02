@@ -7,6 +7,7 @@ biraz | 조금, 약간 | adv | Biraz Türkçe biliyorum. | 튀르키예어를 �
 az | 적게, 적은 | adv | Çok az şeker, lütfen. | 설탕은 아주 조금만 주세요.
 hiç | 전혀(부정문과 함께) | adv | Hiç anlamadım. | 전혀 못 알아들었어요. | | 의문문에서는 '~한 적 있어?': Hiç Türkiye'ye gittin mi?
 her zaman | 항상 | adv | Her zaman çay içerim. | 저는 항상 차를 마셔요.
+her gün | 매일 | adv | Her gün Türkçe çalışıyorum. | 매일 튀르키예어를 공부해요.
 genellikle | 보통, 대개 | adv | Genellikle metroyla gidiyorum. | 보통 지하철로 가요.
 bazen | 가끔 | adv | Bazen Türk kahvesi içerim. | 가끔 튀르키예 커피를 마셔요.
 sık sık | 자주 | adv | Sık sık annemi ararım. | 엄마에게 자주 전화해요.
@@ -129,6 +130,8 @@ mesaj | 메시지 | n | Sana mesaj attım. | 너한테 메시지 보냈어.
 telefon numarası | 전화번호 | n | Telefon numaranızı alabilir miyim? | 전화번호 받을 수 있을까요? | nodrill
 bilgi | 정보, 지식 | n | Daha fazla bilgi alabilir miyim? | 정보를 더 얻을 수 있을까요?
 örnek | 예, 예시 | n | Bir örnek verir misiniz? | 예를 하나 들어 주실래요?
+fikir | 생각, 아이디어 | n | Çok iyi bir fikir! | 정말 좋은 생각이야! | drop
+sorun | 문제 | n | Sorun yok! | 문제없어요!
 `,
 
   hobbies: `

@@ -12,9 +12,11 @@ import drill from './views/drill.js';
 import words from './views/words.js';
 import alphabet from './views/alphabet.js';
 import settings from './views/settings.js';
+import grammar from './views/grammar.js';
+import './views/wordforms.js';
 import { renderOnboarding } from './views/onboarding.js';
 
-const ROUTES = { home, learn, lesson, review, practice, drill, words, alphabet, settings };
+const ROUTES = { home, learn, lesson, review, practice, drill, words, alphabet, settings, grammar };
 const TABS = [
   { id: 'home', label: '홈', icon: 'home' },
   { id: 'learn', label: '학습', icon: 'learn' },

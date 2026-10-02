@@ -3,6 +3,7 @@ import { state } from '../core/store.js';
 import { UNITS, LESSONS } from '../data/curriculum.js';
 import { LETTERS } from '../data/alphabet.js';
 import { nextLesson } from './home.js';
+import { NOTE, NOTES } from '../data/notes.js';
 
 export default {
   tab: 'learn',
@@ -27,6 +28,15 @@ export default {
         ),
         icon('chev-right', 20),
       ),
+      h('a', { class: 'card tap row', href: '#/grammar', style: { textDecoration: 'none', color: 'inherit' } },
+        h('div', { class: 'li-icon', style: { width: '52px', height: '52px', borderRadius: '16px', display: 'grid', placeItems: 'center', fontSize: '26px', background: 'color-mix(in srgb, #0e9f9a 14%, transparent)' } }, '📖'),
+        h('div', { class: 'grow' },
+          h('div', { class: 'tiny bold muted' }, '언제든 찾아보기'),
+          h('div', { class: 'bold', style: { fontSize: '17px' } }, '문법 노트'),
+          h('div', { class: 'small text-2' }, `한국어와 비교한 핵심 문법 ${NOTES.length}개 · 조사 대응표·모음조화·시제`),
+        ),
+        icon('chev-right', 20),
+      ),
     );
 
     for (const u of UNITS) {
@@ -40,7 +50,7 @@ export default {
           h('div', { class: 'u-tr' }, u.tr),
           h('div', { class: 'u-desc' }, u.desc),
           h('div', { class: 'u-progress' }, h('span', null, `${done}/${u.lessons.length}`), bar(done / u.lessons.length)),
-          u.notes?.length ? h('div', { class: 'u-notes' }, u.notes.map((n) => h('a', { class: 'u-note', href: `#/grammar/${n.id}` }, icon('bulb', 14), n.title))) : null,
+          u.notes?.length ? h('div', { class: 'u-notes' }, u.notes.map((id) => NOTE.get(id)).filter(Boolean).map((n) => h('a', { class: 'u-note', href: `#/grammar/${n.id}` }, icon('bulb', 14), n.title))) : null,
         ),
         h('div', { class: 'lesson-list' }, u.lessons.map((l, i) => {
           const rec = state.lessons[l.id];

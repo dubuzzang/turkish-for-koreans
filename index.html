@@ -27,11 +27,13 @@
 <link rel="stylesheet" href="css/app.css">
 <script>
   // 테마를 첫 페인트 전에 적용해 깜빡임 방지
-  try {
-    var s = JSON.parse(localStorage.getItem('merhaba-tr.v1') || '{}');
-    var t = s && s.settings && s.settings.theme;
-    if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
-  } catch (e) {}
+  (function () {
+    try {
+      var s = JSON.parse(localStorage.getItem('merhaba-tr.v1') || '{}');
+      var t = s && s.settings && s.settings.theme;
+      if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+    } catch (e) {}
+  })();
 </script>
 </head>
 <body>

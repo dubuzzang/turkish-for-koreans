@@ -186,6 +186,7 @@ ay | 달, 월 | n | Bir ay Türkiye'de kalacağım. | 한 달 동안 튀르키�
 yıl | 해, 년 | n | Bu yıl Türkçe öğreniyorum. | 올해 튀르키예어를 배우고 있어요.
 sene | 해, 년 | n | Geçen sene Kapadokya'ya gittim. | 작년에 카파도키아에 갔어요.
 bugün | 오늘 | adv | Bugün hava çok güzel. | 오늘 날씨가 정말 좋아요.
+geçen | 지난 | adj | Geçen hafta Bursa'ya gittim. | 지난주에 부르사에 갔어요. | nodrill
 yarın | 내일 | adv | Yarın görüşürüz! | 내일 봐요!
 dün | 어제 | adv | Dün çok yoruldum. | 어제 정말 피곤했어요.
 şimdi | 지금 | adv | Şimdi neredesin? | 지금 어디야?

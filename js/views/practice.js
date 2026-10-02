@@ -2,9 +2,10 @@ import { h, icon } from '../core/ui.js';
 import { state } from '../core/store.js';
 import { DRILL_LIST, learnedWords } from './drill.js';
 import { canListen } from './lesson.js';
+import { sttSupported } from '../core/stt.js';
 
 const TINT = {
-  quiz: '#f0a020', listen: '#2b72e8', build: '#7356f0', type: '#0e9f9a', dictation: '#d63f7f', pairs: '#e5484d', weak: '#e2700c',
+  quiz: '#f0a020', listen: '#2b72e8', build: '#7356f0', type: '#0e9f9a', dictation: '#d63f7f', speak: '#e5484d', pairs: '#e2700c', weak: '#e2700c',
   harmony: '#0891b2', cases: '#2b72e8', poss: '#e2700c', copula: '#d63f7f', conj: '#15a34a', numbers: '#a16207', time: '#0f766e',
 };
 
@@ -12,12 +13,12 @@ function drillList(items, audio) {
   return h('div', { class: 'list' }, items.map((d) => {
     const best = state.drills[d.id]?.best;
     const count = d.count?.();
-    const disabled = d.needsAudio && !audio;
+    const disabled = (d.needsAudio && !audio) || (d.needsMic && !sttSupported);
     return h('a', { class: 'list-item', href: `#/drill/${d.id}`, style: disabled ? { opacity: 0.55 } : null },
       h('div', { class: 'li-icon', style: { background: `color-mix(in srgb, ${TINT[d.id]} 15%, transparent)` } }, d.emoji),
       h('div', { class: 'li-main' },
         h('div', { class: 'li-title' }, d.title, count ? h('span', { class: 'badge bad', style: { marginLeft: '8px' } }, String(count)) : null),
-        h('div', { class: 'li-sub' }, disabled ? '튀르키예어 음성이 필요해요' : d.desc),
+        h('div', { class: 'li-sub' }, disabled ? (d.needsMic ? '음성 인식 지원 브라우저 필요(크롬·사파리)' : '튀르키예어 음성이 필요해요') : d.desc),
       ),
       best ? h('span', { class: 'badge ok' }, `최고 ${Math.round(best * 100)}%`) : null,
       icon('chev-right', 20),

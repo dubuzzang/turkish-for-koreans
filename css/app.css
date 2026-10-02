@@ -587,6 +587,29 @@ textarea.type-input { min-height: 110px; resize: none; line-height: 1.45; }
 
 .play-row { display: flex; align-items: center; justify-content: center; gap: 14px; padding: 6px 0 4px; }
 
+.mic-btn {
+  width: 92px; height: 92px; border-radius: 50%; border: 0;
+  display: grid; place-items: center;
+  background: var(--accent); color: #fff; box-shadow: 0 5px 0 color-mix(in srgb, var(--accent) 70%, #000);
+  transition: transform .12s;
+}
+.mic-btn:active { transform: translateY(3px); box-shadow: 0 2px 0 color-mix(in srgb, var(--accent) 70%, #000); }
+.mic-btn.listening { animation: micPulse 1.1s infinite; background: var(--bad); }
+@keyframes micPulse { 0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 45%, transparent); } 50% { box-shadow: 0 0 0 18px transparent; } }
+
+/* 회화 말풍선 */
+.chat { display: flex; flex-direction: column; gap: 12px; margin-top: 14px; }
+.bub-row { display: flex; align-items: flex-end; gap: 8px; }
+.bub-row.right { flex-direction: row-reverse; }
+.bub-av { width: 38px; height: 38px; flex: none; border-radius: 50%; display: grid; place-items: center; background: var(--surface-2); font-size: 20px; }
+.bub { max-width: 82%; padding: 10px 14px; border-radius: 18px; border-bottom-left-radius: 6px; background: var(--surface); box-shadow: var(--shadow-1); transition: box-shadow .2s, transform .2s; }
+.bub-row.right .bub { border-bottom-left-radius: 18px; border-bottom-right-radius: 6px; background: var(--brand-soft); }
+.bub-row.now .bub { box-shadow: 0 0 0 3px var(--brand); transform: scale(1.02); }
+.bub-name { font-size: 12px; font-weight: 750; color: var(--muted); }
+.bub-tr { font-size: 17px; font-weight: 700; line-height: 1.4; cursor: pointer; }
+.bub-ko { font-size: 14px; color: var(--text-2); margin-top: 3px; transition: filter .2s; }
+.bub-ko.blur { filter: blur(5px); cursor: pointer; user-select: none; }
+
 /* 레슨 완료 */
 .done-screen { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 16px; padding: 24px 0; }
 .done-emoji { font-size: 76px; line-height: 1; animation: pop .6s var(--ease); }

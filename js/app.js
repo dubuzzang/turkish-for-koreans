@@ -13,10 +13,12 @@ import words from './views/words.js';
 import alphabet from './views/alphabet.js';
 import settings from './views/settings.js';
 import grammar from './views/grammar.js';
+import talk from './views/talk.js';
+import phrases from './views/phrases.js';
 import './views/wordforms.js';
 import { renderOnboarding } from './views/onboarding.js';
 
-const ROUTES = { home, learn, lesson, review, practice, drill, words, alphabet, settings, grammar };
+const ROUTES = { home, learn, lesson, review, practice, drill, words, alphabet, settings, grammar, talk, phrases };
 const TABS = [
   { id: 'home', label: '홈', icon: 'home' },
   { id: 'learn', label: '학습', icon: 'learn' },

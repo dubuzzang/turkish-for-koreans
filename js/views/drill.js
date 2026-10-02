@@ -16,6 +16,7 @@ import { PAIRS } from '../data/alphabet.js';
 import { runSession, renderDone, fmtDuration } from './session.js';
 import { mcCore, typeCore } from './exercises.js';
 import { canListen } from './lesson.js';
+import { sttSupported } from '../core/stt.js';
 
 // ---------- 재료 ----------
 export function learnedWords() {
@@ -87,6 +88,12 @@ const DRILLS = {
     group: 'vocab', title: '받아쓰기', emoji: '✍️', desc: '문장을 듣고 그대로 받아쓰기', needsAudio: true,
     build() {
       return sample(sentencePool(), 8).map((s) => ({ type: 'typeSent', dictation: true, tr: s.tr, ko: s.ko, key: s.key }));
+    },
+  },
+  speak: {
+    group: 'vocab', title: '말하기', emoji: '🗣️', desc: '문장을 소리 내어 읽고 발음 확인 (음성 인식)', needsMic: true,
+    build() {
+      return sample(sentencePool(), 8).map((s) => ({ type: 'speak', tr: s.tr, ko: s.ko }));
     },
   },
   pairs: {
@@ -404,6 +411,12 @@ export default {
       ]);
       return null;
     }
+    if (d.needsMic && !sttSupported) {
+      emptyState(root, '🎙️', '이 브라우저는 음성 인식을 지원하지 않아요', '안드로이드·PC는 크롬, 아이폰은 사파리에서 말하기 연습을 할 수 있어요.', [
+        h('a', { class: 'btn btn-outline', href: '#/practice' }, '돌아가기'),
+      ]);
+      return null;
+    }
     let cleanup = null;
     const begin = (cfg) => {
       let steps;
@@ -429,7 +442,7 @@ export default {
         requeue: id !== 'pairs',
         onExit: () => go('#/practice'),
         onFinish: (sum) => {
-          const xp = Math.max(3, sum.correct);
+          const xp = id === 'speak' ? steps.length * 2 : Math.max(3, sum.correct);
           addXP(xp);
           const rec = (state.drills[id] ||= { best: 0, n: 0 });
           rec.best = Math.max(rec.best || 0, sum.acc);

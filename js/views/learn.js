@@ -37,6 +37,15 @@ export default {
         ),
         icon('chev-right', 20),
       ),
+      h('a', { class: 'card tap row', href: '#/talk', style: { textDecoration: 'none', color: 'inherit' } },
+        h('div', { class: 'li-icon', style: { width: '52px', height: '52px', borderRadius: '16px', display: 'grid', placeItems: 'center', fontSize: '26px', background: 'color-mix(in srgb, #7356f0 14%, transparent)' } }, '💬'),
+        h('div', { class: 'grow' },
+          h('div', { class: 'tiny bold muted' }, '실전 회화'),
+          h('div', { class: 'bold', style: { fontSize: '17px' } }, '상황별 회화 · 생존 표현'),
+          h('div', { class: 'small text-2' }, '입국·택시·호텔·식당·시장 대화 16개, 역할 연습'),
+        ),
+        icon('chev-right', 20),
+      ),
     );
 
     for (const u of UNITS) {

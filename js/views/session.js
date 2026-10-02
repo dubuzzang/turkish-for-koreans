@@ -3,11 +3,12 @@ import { h, icon, pick, confirmSheet, speakBtn, hangulEl } from '../core/ui.js';
 import { RENDERERS, diffView } from './exercises.js';
 import { sfxCorrect, sfxWrong } from '../core/sfx.js';
 import { speak, stopSpeaking } from '../core/tts.js';
+import { stopListening } from '../core/stt.js';
 import { recordAnswer } from '../core/store.js';
 
 const PRAISE = [['Harika!', '훌륭해요!'], ['Çok iyi!', '아주 좋아요!'], ['Süper!', '최고예요!'], ['Aferin!', '잘했어요!'], ['Mükemmel!', '완벽해요!'], ['Bravo!', '브라보!'], ['Doğru!', '정답이에요!']];
 const COMFORT = [['Olsun!', '괜찮아요, 다시 나와요'], ['Bir daha!', '한 번 더 해 봐요'], ['Az kaldı!', '거의 다 왔어요']];
-const INFO_TYPES = new Set(['tip', 'intro', 'grammar']);
+const INFO_TYPES = new Set(['tip', 'intro', 'grammar', 'speak']);
 const SPEAK_ON_OK = new Set(['tiles', 'typeSent', 'typeWord', 'listenSent', 'choice']);
 
 export function runSession(root, cfg) {
@@ -187,6 +188,7 @@ export function runSession(root, cfg) {
   function cleanup() {
     document.removeEventListener('keydown', onKey);
     stopSpeaking();
+    stopListening();
   }
 
   next();

@@ -3,7 +3,8 @@
 import { h, icon, speakBtn, hangulEl, shuffle, POS_LABEL, tapToSpeak } from '../core/ui.js';
 import { openNoteSheet } from './grammar.js';
 import { NOTE } from '../data/notes.js';
-import { speak } from '../core/tts.js';
+import { speak, stopSpeaking } from '../core/tts.js';
+import { listenOnce, stopListening, bestMatch, wordMatches, STT_ERRORS } from '../core/stt.js';
 import { state } from '../core/store.js';
 import { checkAnswer, diffChars, accentHint, normalize, trLower, TR_EXTRA } from '../core/tr.js';
 import { WORDS } from '../data/vocab.js';
@@ -358,8 +359,60 @@ export function renderTypeSent(step, api) {
   return { el, ...core, onShow: () => { onShow0(); if (step.dictation) speak(step.tr); } };
 }
 
-export const RENDERERS = {
-  tip: renderTip,
+// ---------- 말하기 (음성 인식) ----------
+export function renderSpeak(step, api) {
+  const target = step.tr;
+  let tries = 0;
+  const status = h('div', { class: 'small text-2 center' }, '마이크를 누르고 문장을 소리 내어 읽어 보세요');
+  const heard = h('div', { class: 'center bold', style: { fontSize: '19px', minHeight: '30px' } });
+  const mic = h('button', { class: 'mic-btn', type: 'button', 'aria-label': '말하기 시작' }, icon('mic', 38));
+  const el = h('div', { class: 'ex' },
+    h('div', { class: 'ex-label' }, icon('mic', 16), '소리 내어 말해 보세요'),
+    h('div', { class: 'intro-card' },
+      h('div', { class: 'row', style: { alignItems: 'flex-start' } },
+        h('div', { class: 'grow' },
+          h('div', { style: { fontSize: '24px', fontWeight: 800, lineHeight: 1.35 } }, target),
+          hangulEl(target),
+          h('div', { class: 'text-2 mt-4' }, step.ko),
+        ),
+        speakBtn(target), speakBtn(target, { slow: true }),
+      ),
+    ),
+    h('div', { class: 'play-row' }, mic),
+    status,
+    heard,
+  );
+  mic.addEventListener('click', async () => {
+    if (mic.classList.contains('listening')) { stopListening(); return; }
+    stopSpeaking();
+    mic.classList.add('listening');
+    status.textContent = '듣고 있어요… 말해 보세요';
+    const r = await listenOnce();
+    mic.classList.remove('listening');
+    if (!r.ok) { status.textContent = STT_ERRORS[r.error] || '잘 듣지 못했어요. 다시 시도해 주세요.'; return; }
+    tries++;
+    const best = bestMatch(r.alternatives, target);
+    const pct = Math.round(best.score * 100);
+    heard.replaceChildren(...wordMatches(target, best.text).map(({ w, ok }) => h('span', { style: { color: ok ? 'var(--ok)' : 'var(--bad)', marginRight: '6px' } }, w)));
+    status.textContent = `들린 문장: "${best.text}" · 일치도 ${pct}%`;
+    if (best.score >= 0.75) {
+      api.submit({ ok: true, answer: target, sub: step.ko, title: `발음 ${pct}% — 잘 알아들었어요!`, noRequeue: true });
+    } else if (tries >= 3) {
+      api.submit({ ok: false, answer: target, sub: step.ko, speakText: target, title: '조금 더 연습해 봐요', why: '🐢 천천히 듣기로 한 단어씩 따라 해 보세요.', noRequeue: true });
+    } else {
+      status.textContent += ' — 또박또박 다시 말해 볼까요?';
+    }
+  });
+  return {
+    el,
+    custom: true,
+    onShow() {
+      api.setMain('건너뛰기', () => api.submit({ ok: false, skipped: true, answer: target, sub: step.ko, title: '다음에 다시 해 봐요', noRequeue: true }), 'btn-outline');
+    },
+  };
+}
+
+export const RENDERERS = {  tip: renderTip,
   intro: renderIntro,
   mc: renderMC,
   choice: renderChoice,
@@ -368,4 +421,5 @@ export const RENDERERS = {
   tiles: renderTiles,
   typeWord: renderTypeWord,
   typeSent: renderTypeSent,
+  speak: renderSpeak,
 };

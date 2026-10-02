@@ -33,6 +33,7 @@ function fresh() {
     letters: {},                 // 알파벳 확인 기록
     drills: {},                  // 드릴별 최고 기록
     newDays: {},                 // 날짜 → 새로 배운 단어 수
+    talks: {},                   // 회화 연습 기록
   };
 }
 

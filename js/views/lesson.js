@@ -2,6 +2,7 @@ import { h, confetti } from '../core/ui.js';
 import { state, commit, addXP } from '../core/store.js';
 import { learnWords, isLearned } from '../core/deck.js';
 import { ttsSupported, hasTurkishVoice } from '../core/tts.js';
+import { sttSupported } from '../core/stt.js';
 import { sfxComplete } from '../core/sfx.js';
 import { buildLessonSteps } from '../core/lessonBuilder.js';
 import { LESSON, LESSONS } from '../data/curriculum.js';
@@ -18,7 +19,7 @@ export default {
     if (!lesson) { go('#/learn'); return; }
     const prev = state.lessons[id];
     const reviewMode = !!prev?.done;
-    const steps = buildLessonSteps(lesson, { listening: canListen(), review: reviewMode });
+    const steps = buildLessonSteps(lesson, { listening: canListen(), review: reviewMode, speaking: sttSupported && state.settings.speaking !== false });
     steps.forEach((s) => { if (s.type === 'intro') s.seen = isLearned(s.w.id); });
 
     return runSession(root, {

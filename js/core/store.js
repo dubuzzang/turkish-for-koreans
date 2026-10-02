@@ -17,6 +17,8 @@ export const DEFAULT_SETTINGS = {
   speaking: true,      // 말하기 문제 포함(지원 기기)
   onboarded: false,
   purpose: '',
+  autoOffline: true,   // 앱으로 설치해 열면 와이파이에서 오프라인 팩 자동 저장
+  installHint: true,   // 홈 화면의 "앱으로 설치" 안내
 };
 
 function fresh() {

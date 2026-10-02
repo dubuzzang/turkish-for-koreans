@@ -16,10 +16,13 @@ import grammar from './views/grammar.js';
 import talk from './views/talk.js';
 import phrases from './views/phrases.js';
 import stats from './views/stats.js';
+import install from './views/install.js';
+import move from './views/move.js';
 import './views/wordforms.js';
 import { renderOnboarding } from './views/onboarding.js';
+import { autoOffline, onOfflineChange, offlineJob } from './core/offline.js';
 
-const ROUTES = { home, learn, lesson, review, practice, drill, words, alphabet, settings, grammar, talk, phrases, stats };
+const ROUTES = { home, learn, lesson, review, practice, drill, words, alphabet, settings, grammar, talk, phrases, stats, install, move };
 const TABS = [
   { id: 'home', label: '홈', icon: 'home' },
   { id: 'learn', label: '학습', icon: 'learn' },
@@ -83,7 +86,8 @@ function route() {
   document.querySelectorAll('.confetti').forEach((c) => c.remove());
   if (typeof cleanup === 'function') { try { cleanup(); } catch (e) { console.error(e); } }
   cleanup = null;
-  if (!state.settings.onboarded) {
+  // 기록 옮기기 링크는 첫 실행 안내보다 먼저 (새로 설치한 앱으로 기록을 보낼 때)
+  if (!state.settings.onboarded && !/^#\/move\//.test(location.hash)) {
     document.body.classList.add('immersive');
     app.replaceChildren(viewEl);
     viewEl.replaceChildren();
@@ -131,6 +135,25 @@ window.addEventListener('hashchange', route);
 route();
 
 // ---------- 오프라인(PWA) ----------
+// 앱으로 설치해 열면 와이파이에서 녹음·글꼴을 자동 저장하고, 진행률을 작은 칩으로 보여 준다
+const chip = h('a', { class: 'offline-chip', href: '#/install', hidden: true, 'aria-live': 'polite' });
+document.body.append(chip);
+onOfflineChange(() => {
+  const job = offlineJob();
+  chip.hidden = !job?.auto;
+  if (job?.auto) chip.textContent = `⬇️ 오프라인 저장 중 ${job.total ? Math.round((job.done / job.total) * 100) : 0}%`;
+});
+setTimeout(() => {
+  autoOffline().then((r) => {
+    if (r !== 'started') return;
+    toast('와이파이에서 오프라인 자료를 저장하고 있어요 — 끝나면 데이터 없이 학습할 수 있어요');
+    offlineJob()?.promise.then((res) => {
+      if (res.ok) toast('오프라인 준비 완료 🎉 이제 데이터 없이 학습할 수 있어요', 'ok');
+      else if (!res.stopped) toast('일부를 저장하지 못했어요 — 설정 → 앱 설치·오프라인에서 다시 받을 수 있어요', 'bad');
+    });
+  }).catch(() => {});
+}, 2500);
+
 window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); window.__installPrompt = e; });
 window.addEventListener('appinstalled', () => { window.__installPrompt = null; toast('앱으로 설치됐어요! 홈 화면에서 바로 열 수 있어요.', 'ok'); });
 

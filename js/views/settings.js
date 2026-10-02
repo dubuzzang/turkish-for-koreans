@@ -1,6 +1,8 @@
 import { h, icon, toast, confirmSheet, downloadText, speakBtn } from '../core/ui.js';
 import { state, setSetting, exportJSON, importJSON, resetAll, dayKey } from '../core/store.js';
-import { trVoices, currentVoice, setVoice, speak, onVoicesChanged, ttsSupported, recordingCount, recordingBytes, recordingIds, audioUrl, AUDIO_CACHE } from '../core/tts.js';
+import { trVoices, currentVoice, setVoice, speak, onVoicesChanged, ttsSupported, recordingCount } from '../core/tts.js';
+import { offlineCard } from './offlinecard.js';
+import { isStandalone } from '../core/offline.js';
 import { VOICE_SAMPLE, RATE_SAMPLE } from '../data/speech.js';
 import { VERSION, RELEASED } from '../version.js';
 
@@ -27,98 +29,6 @@ function seg(key, options, onChange) {
   return box;
 }
 
-// ---------- 오프라인 음성 (녹음 파일을 기기에 보관) ----------
-let dl = null; // 진행 중인 내려받기 — 설정 화면을 벗어나도 계속된다
-const dlListeners = new Set();
-const dlNotify = () => dlListeners.forEach((fn) => fn());
-
-async function cachedAudioIds() {
-  const c = await caches.open(AUDIO_CACHE);
-  return new Set((await c.keys()).map((r) => new URL(r.url).pathname.split('/').pop().replace(/\.mp3$/, '')));
-}
-
-async function downloadAll() {
-  if (dl) return;
-  const ids = recordingIds();
-  dl = { done: 0, total: ids.length, failed: 0, stop: false };
-  dlNotify();
-  try {
-    await navigator.storage?.persist?.();
-    const cache = await caches.open(AUDIO_CACHE);
-    const have = await cachedAudioIds();
-    const todo = ids.filter((id) => !have.has(id));
-    dl.done = ids.length - todo.length;
-    let i = 0;
-    const worker = async () => {
-      while (i < todo.length && !dl.stop) {
-        const url = new URL(audioUrl(todo[i++]), location.href).href;
-        try {
-          const res = await fetch(url, { cache: 'no-cache' });
-          if (res.ok && res.status === 200) await cache.put(url, res);
-          else dl.failed++;
-        } catch { dl.failed++; }
-        dl.done++;
-        if (dl.done % 25 === 0 || dl.done === dl.total) dlNotify();
-      }
-    };
-    await Promise.all(Array.from({ length: 6 }, worker));
-    if (dl.stop) toast('내려받기를 멈췄어요. 받은 음성은 그대로 남아 있어요');
-    else if (dl.failed) toast(`${dl.failed}개를 받지 못했어요 — 연결을 확인하고 다시 눌러 주세요`, 'bad');
-    else toast('오프라인 음성이 준비됐어요 🎧', 'ok');
-  } catch {
-    toast('저장 공간이 부족하거나 브라우저가 허용하지 않아요', 'bad');
-  }
-  dl = null;
-  dlNotify();
-}
-
-function offlineAudioCard() {
-  const box = h('div', { class: 'card' });
-  let seq = 0;
-  const render = async () => {
-    const my = ++seq;
-    const total = recordingCount();
-    if (!('caches' in window) || !total) {
-      box.replaceChildren(h('div', { class: 'bold' }, '📥 오프라인 음성'), h('p', { class: 'small text-2 mt-4' }, total ? '이 브라우저에서는 음성을 따로 보관할 수 없어요.' : '인터넷에 연결되면 내려받을 수 있어요.'));
-      return;
-    }
-    if (dl) {
-      const pct = Math.round((dl.done / Math.max(1, dl.total)) * 100);
-      box.replaceChildren(
-        h('div', { class: 'row between' }, h('div', { class: 'bold' }, '📥 음성 내려받는 중…'), h('span', { class: 'badge brand' }, `${pct}%`)),
-        h('div', { class: 'mt-8' }, h('div', { class: 'bar thin' }, h('i', { style: { width: `${pct}%` } }))),
-        h('p', { class: 'small text-2 mt-8' }, `${dl.done.toLocaleString('ko-KR')} / ${dl.total.toLocaleString('ko-KR')}개 · 다른 화면으로 가도 계속 받아요`),
-        h('button', { class: 'btn btn-outline btn-sm mt-8', type: 'button', onclick: () => { if (dl) dl.stop = true; } }, '멈추기'),
-      );
-      return;
-    }
-    const have = await cachedAudioIds();
-    if (my !== seq) return; // 그사이 더 새로 그렸으면 그만
-    const n = recordingIds().filter((id) => have.has(id)).length;
-    const full = n >= total;
-    const mb = Math.max(1, Math.round((recordingBytes() * (total - n)) / total / 1048576));
-    box.replaceChildren(
-      h('div', { class: 'bold' }, full ? '✅ 오프라인 음성 준비 완료' : '📥 오프라인 음성 내려받기'),
-      h('p', { class: 'small text-2 mt-4' }, full
-        ? `녹음 음성 ${total.toLocaleString('ko-KR')}개를 모두 기기에 보관했어요. 인터넷 없이도 발음을 들을 수 있어요.`
-        : `들었던 음성은 자동으로 보관돼요(지금 ${n.toLocaleString('ko-KR')} / ${total.toLocaleString('ko-KR')}개). 지하철·비행기에서도 들으려면 한 번에 모두 받아 두세요.`),
-      full
-        ? h('button', { class: 'btn btn-ghost btn-sm mt-8', type: 'button', onclick: async () => {
-          if (await confirmSheet('기기에 보관한 녹음 음성을 지울까요? 인터넷에 연결되면 다시 들을 수 있어요.', { title: '보관한 음성 지우기', ok: '지우기', danger: true })) {
-            await caches.delete(AUDIO_CACHE);
-            render();
-          }
-        } }, '보관한 음성 지우기')
-        : h('button', { class: 'btn btn-primary btn-block mt-12', type: 'button', onclick: () => { if (!navigator.onLine) { toast('인터넷에 연결된 뒤 눌러 주세요', 'bad'); return; } downloadAll(); } }, `모두 내려받기 (약 ${mb}MB)`),
-    );
-  };
-  render();
-  dlListeners.add(render);
-  const offIndex = onVoicesChanged(render); // 녹음 목록을 늦게 받았을 때
-  box.cleanup = () => { dlListeners.delete(render); offIndex(); };
-  return box;
-}
-
 export function voiceGuide() {
   return h('div', { class: 'col small text-2', style: { gap: '8px' } },
     h('div', null, h('b', null, '📱 아이폰·아이패드'), h('br'), '설정 → 손쉬운 사용 → 읽기 및 말하기 → 음성 → 튀르키예어 → "Yelda" 다운로드'),
@@ -127,29 +37,6 @@ export function voiceGuide() {
     h('div', null, h('b', null, '🍎 Mac'), h('br'), '시스템 설정 → 손쉬운 사용 → 읽기 및 말하기 → 시스템 음성 → 음성 관리 → 튀르키예어'),
     h('div', null, '설치 후 이 페이지를 새로고침하세요.'),
   );
-}
-
-function installCard() {
-  const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
-  const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
-  const body = h('div', { class: 'card' });
-  if (standalone) {
-    body.append(h('div', { class: 'bold' }, '✅ 앱으로 실행 중이에요'), h('p', { class: 'small text-2 mt-4' }, '한 번 열어 둔 내용은 인터넷 없이도 학습할 수 있어요. 발음 음성까지 모두 쓰려면 위의 "오프라인 음성"을 내려받아 두세요.'));
-  } else if (window.__installPrompt) {
-    body.append(
-      h('div', { class: 'bold' }, '📲 홈 화면에 앱으로 설치'),
-      h('p', { class: 'small text-2 mt-4' }, '설치하면 앱처럼 전체 화면으로 열리고, 지하철처럼 인터넷이 약한 곳에서도 학습할 수 있어요.'),
-      h('button', { class: 'btn btn-primary btn-block mt-12', type: 'button', onclick: async () => { const p = window.__installPrompt; window.__installPrompt = null; p.prompt(); await p.userChoice.catch(() => {}); } }, '설치하기'),
-    );
-  } else {
-    body.append(
-      h('div', { class: 'bold' }, '📲 홈 화면에 추가하기'),
-      h('p', { class: 'small text-2 mt-4' }, ios
-        ? 'Safari 아래쪽 공유 버튼(⬆️) → "홈 화면에 추가"를 누르세요. 앱처럼 열리고 오프라인에서도 학습할 수 있어요.'
-        : '브라우저 메뉴(⋮)에서 "앱 설치" 또는 "홈 화면에 추가"를 누르세요. 앱처럼 열리고 오프라인에서도 학습할 수 있어요.'),
-    );
-  }
-  return body;
 }
 
 export default {
@@ -175,7 +62,7 @@ export default {
     voiceSel.addEventListener('change', () => { setVoice(voiceSel.value); setSetting('voice', voiceSel.value); renderVoices(); });
     renderVoices();
     const off = onVoicesChanged(renderVoices);
-    const offline = offlineAudioCard();
+    const offline = offlineCard();
 
     // 속도: 저장값 0.9가 자연스러운 속도(1.00×)
     const rateLabel = h('span', { class: 'badge brand' });
@@ -237,7 +124,13 @@ export default {
       ),
 
       h('div', { class: 'section-head mt-24' }, h('div', { class: 'section-title' }, '앱 설치·오프라인')),
-      installCard(),
+      h('div', { class: 'list' },
+        h('a', { class: 'list-item', href: '#/install' },
+          h('div', { class: 'li-icon', style: { fontSize: '20px' } }, '📲'),
+          h('div', { class: 'li-main' },
+            h('div', { class: 'li-title' }, isStandalone() ? '앱으로 실행 중 · 오프라인 저장' : '안드로이드·아이폰에 앱으로 설치'),
+            h('div', { class: 'li-sub' }, '설치하면 녹음·글꼴까지 저장돼 데이터 없이 학습 · 학습 기록 옮기기')),
+          icon('chev-right', 20))),
 
       h('div', { class: 'section-head mt-24' }, h('div', { class: 'section-title' }, '데이터')),
       h('div', { class: 'list' },

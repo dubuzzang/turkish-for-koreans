@@ -1,5 +1,6 @@
 import { h, icon, ring, speakBtn, hangulEl } from '../core/ui.js';
-import { state, xpToday, streakNow, dayKey } from '../core/store.js';
+import { state, xpToday, streakNow, dayKey, setSetting } from '../core/store.js';
+import { isStandalone } from '../core/offline.js';
 import { dueCount, deckStats } from '../core/deck.js';
 import { speechAvailable, onVoicesChanged } from '../core/tts.js';
 import { LESSONS } from '../data/curriculum.js';
@@ -132,7 +133,16 @@ export default {
       h('div', { class: 'card' }, weekChart()),
     );
 
-    root.append(hero, voiceNote, plan, phrase, quickGrid, week,
+    // 앱 설치 안내 (브라우저로 쓰는 중일 때)
+    const installHint = !isStandalone() && state.settings.installHint !== false
+      ? h('div', { class: 'card mt-16' },
+        h('a', { class: 'install-hint', href: '#/install' },
+          h('div', { class: 'ih-ico' }, '📲'),
+          h('div', { class: 'grow' }, h('div', { class: 'bold' }, '앱으로 설치하고 데이터 없이 학습'), h('div', { class: 'small text-2' }, '안드로이드 앱 · 아이폰 홈 화면 앱 — 녹음까지 기기에 저장')),
+          h('button', { class: 'icon-btn ih-x', type: 'button', 'aria-label': '안내 닫기', onclick: (e) => { e.preventDefault(); setSetting('installHint', false); e.currentTarget.closest('.card').remove(); } }, icon('x', 18))))
+      : h('div');
+
+    root.append(hero, voiceNote, installHint, plan, phrase, quickGrid, week,
       h('div', { class: 'footer-note' }, `Merhaba v${VERSION} · 한국인을 위한 튀르키예어`));
     return off;
   },

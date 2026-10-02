@@ -2,7 +2,12 @@
 
 한국어 화자에게 맞춘 튀르키예어(터키어) 학습 웹앱입니다. 휴대폰 브라우저에 최적화되어 있고, 설치 없이 바로 쓸 수 있어요.
 
-**바로 사용하기 → https://dubuzzang.github.io/turkish-for-koreans/**
+**바로 사용하기 → https://turkish-for-koreans.pages.dev/** (보조 주소: https://dubuzzang.github.io/turkish-for-koreans/)
+
+**휴대폰 앱으로 설치 →** 앱의 설정 → 앱 설치·오프라인 (https://turkish-for-koreans.pages.dev/#/install)
+- 안드로이드: [Merhaba 앱(APK) 내려받기](https://turkish-for-koreans.pages.dev/download/merhaba.apk)
+- 아이폰·아이패드: Safari로 열기 → 공유 → "홈 화면에 추가"
+- 설치한 앱을 처음 열면 와이파이에서 녹음·글꼴을 자동 저장해, 그다음부터 **데이터 없이** 학습할 수 있어요.
 
 ## 왜 한국인에게 맞춤인가
 
@@ -76,4 +81,4 @@ tests/                  node:test 테스트
 
 녹음 음성은 튀르키예어 음성 데이터로 학습한 [Anka TTS](https://huggingface.co/krmkayabasi/Anka-TTS)(Kerem Kayabaşı)로 만들었습니다. 내장 남녀 목소리는 AI로 만든 목소리이고 실존 인물의 녹음이나 복제가 아닙니다. Anka의 가중치와 목소리는 **CC BY-NC 4.0**(비상업)이라 이 무료 학습 앱에 쓰고 있으며, 앱을 상업적으로 쓰려면 녹음을 다른 엔진으로 바꾸거나 따로 허락을 받아야 합니다. 이전 버전(v1.5.0)의 녹음은 [VoxCPM2](https://huggingface.co/openbmb/VoxCPM2)(Apache-2.0)로 만들었습니다.
 
-`main` 브랜치에 푸시하면 GitHub Actions가 테스트 후 GitHub Pages로 배포합니다. 버전별 변경 사항은 [CHANGELOG.md](CHANGELOG.md)에 있습니다.
+`main` 브랜치에 푸시하면 GitHub Actions가 테스트 후 GitHub Pages로 배포합니다. Cloudflare Pages는 `npm run deploy:cf`(wrangler 로그인 필요)로 배포하고, 안드로이드 앱 빌드 방법은 [android/README.md](android/README.md)에 있습니다. 버전별 변경 사항은 [CHANGELOG.md](CHANGELOG.md)에 있습니다.

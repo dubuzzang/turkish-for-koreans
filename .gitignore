@@ -10,3 +10,8 @@ Thumbs.db
 *.log
 .vscode/
 .idea/
+android/*.apk
+android/*.aab
+*.keystore
+*.jks
+.wrangler/

@@ -92,13 +92,14 @@ self.addEventListener('fetch', (e) => {
   if (/(^|\\.)fonts\\.(googleapis|gstatic)\\.com$|(^|\\.)cdn\\.jsdelivr\\.net$/.test(url.hostname)) {
     e.respondWith(caches.open(FONT_CACHE).then(async (c) => {
       const hit = await c.match(req);
-      if (hit) return hit;
+      // <link>로 받은 보관본은 불투명 응답이라, 내용을 읽으려는 CORS 요청(오프라인 팩의 글꼴 목록 읽기)에는 새로 받아 준다
+      if (hit && !(hit.type === 'opaque' && req.mode === 'cors')) return hit;
       try {
         const res = await fetch(req);
         if (res.ok || res.type === 'opaque') c.put(req, res.clone());
         return res;
       } catch {
-        return Response.error();
+        return hit || Response.error();
       }
     }));
   }

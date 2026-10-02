@@ -1,13 +1,15 @@
 {
   "name": "turkish-for-koreans",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "private": true,
   "description": "한국인을 위한 튀르키예어 학습 웹앱 — 모바일 최적화, FSRS 간격 반복, 한국어 비교 문법",
   "type": "module",
   "scripts": {
     "test": "node --test \"tests/**/*.test.js\"",
     "serve": "python -m http.server 5173",
-    "build:sw": "node scripts/gen-sw.mjs"
+    "build:sw": "node scripts/gen-sw.mjs",
+    "build": "node scripts/gen-sw.mjs && node scripts/build-site.mjs",
+    "deploy:cf": "npm run build && npx --yes wrangler@4 pages deploy _site --project-name turkish-for-koreans --branch main --commit-dirty=true"
   },
   "engines": {
     "node": ">=20"

@@ -7,6 +7,8 @@ import { tokenize } from '../core/tr.js';
 import { tileDistractors } from '../core/lessonBuilder.js';
 import { sfxComplete } from '../core/sfx.js';
 import { TENSES } from '../core/morph.js';
+import { numberTr, priceTr, timeTr, timeAtTr, fmtClock } from '../core/numbers.js';
+import { checkAnswer } from '../core/tr.js';
 import { harmonyItem, caseItem, possItem, copulaItem, conjItem, NOUN_POOL, COPULA_POOL, VERB_POOL } from '../core/drillgen.js';
 import { WORD } from '../data/vocab.js';
 import { LESSONS, LESSON } from '../data/curriculum.js';
@@ -139,6 +141,41 @@ const DRILLS = {
     group: 'grammar', title: '동사 활용', emoji: '🔁', desc: '시제 × 인칭 × 부정·질문 조합 연습', morph: true, note: 'prog', tenses: true,
     make: (rng, cfg) => conjItem(morphPool(VERB_POOL), rng, { tenses: cfg.tenses?.length ? cfg.tenses : ['prog', 'past'] }),
   },
+  // ----- 숫자·시간 -----
+  numbers: {
+    group: 'num', title: '숫자', emoji: '🔢', desc: '듣고 숫자 쓰기 · 숫자 읽기 · 가격 말하기', note: 'numbers',
+    defaults: { range: 2, mode: 'mix' },
+    settings: [
+      { key: 'range', label: '범위', opts: [[1, '0~20'], [2, '~100'], [3, '~1천'], [4, '~10만'], [5, '가격']] },
+      { key: 'mode', label: '방식', opts: [['listen', '듣고 쓰기'], ['read', '읽기'], ['mix', '섞어서']] },
+    ],
+    gen: (rng, cfg, i) => {
+      const range = Number(cfg.range) || 2;
+      const n = pickNumber(rng, range);
+      let mode = cfg.mode === 'mix' ? (i % 2 ? 'read' : 'listen') : cfg.mode;
+      if (range === 5) mode = mode === 'listen' ? 'priceListen' : 'price';
+      return { type: 'num', n, mode };
+    },
+    make: (rng, cfg) => {
+      const n = pickNumber(rng, Number(cfg.range) || 2);
+      return Number(cfg.range) === 5 ? { q: fmtPrice(n), sub: priceTr(n) } : { q: n.toLocaleString('ko-KR'), sub: numberTr(n) };
+    },
+  },
+  time: {
+    group: 'num', title: '시각 말하기', emoji: '🕒', desc: 'Saat kaç? 시계 보고 말하기 · 듣고 고르기', note: 'time',
+    defaults: { tmode: 'mix' },
+    settings: [{ key: 'tmode', label: '방식', opts: [['say', '몇 시예요?'], ['at', '몇 시에?'], ['listen', '듣고 고르기'], ['mix', '섞어서']] }],
+    gen: (rng, cfg, i) => {
+      const h = 1 + Math.floor(rng() * 12);
+      const m = 5 * Math.floor(rng() * 12);
+      const mode = cfg.tmode === 'mix' ? ['say', 'say', 'listen', 'at'][i % 4] : cfg.tmode;
+      return { type: 'clock', h, m, mode };
+    },
+    make: (rng) => {
+      const h = 1 + Math.floor(rng() * 12), m = 5 * Math.floor(rng() * 12);
+      return { q: fmtClock(h, m), sub: timeTr(h, m) };
+    },
+  },
 };
 
 export const DRILL_LIST = Object.entries(DRILLS).map(([id, d]) => ({ id, ...d }));
@@ -179,9 +216,131 @@ function renderMorph(step, api) {
   return { el, ...core };
 }
 
+// ---------- 숫자 · 시각 ----------
+function pickNumber(rng, range) {
+  if (range === 1) return Math.floor(rng() * 21);
+  if (range === 2) return 21 + Math.floor(rng() * 80);
+  if (range === 3) return 100 + Math.floor(rng() * 900);
+  if (range === 4) return 1000 + Math.floor(rng() * 99000);
+  const kurus = [0, 0, 25, 50, 50, 75, 90, 95][Math.floor(rng() * 8)];
+  return (1 + Math.floor(rng() * 300)) + kurus / 100;
+}
+const fmtPrice = (a) => `${Math.floor(a + 1e-9)},${String(Math.round((a - Math.floor(a + 1e-9)) * 100)).padStart(2, '0')} TL`;
+
+function numDistractors(n, price) {
+  const c = new Set();
+  const add = (x) => { x = Math.round(x * 100) / 100; if (x > 0 && x !== n) c.add(x); };
+  if (price) { add(n + 1); add(n - 1); add(n + 10); add(Math.floor(n) + 0.5); add(Math.floor(n) + 0.25); add(n + 0.25); }
+  else {
+    add(n + 1); add(n - 1); add(n + 10); add(n - 10);
+    const s = String(n);
+    if (s.length >= 2) add(Number([...s].reverse().join('')));
+    if (n >= 100) { add(n + 100); add(n - 100); }
+    if (n >= 1000) { add(n + 1000); add(n - 1000); }
+  }
+  return shuffle([...c]).slice(0, 3);
+}
+
+function clockSVG(h, m) {
+  const ticks = Array.from({ length: 12 }, (_, i) => {
+    const a = (i * Math.PI) / 6;
+    const r1 = i % 3 === 0 ? 70 : 76;
+    return `<line x1="${100 + r1 * Math.sin(a)}" y1="${100 - r1 * Math.cos(a)}" x2="${100 + 86 * Math.sin(a)}" y2="${100 - 86 * Math.cos(a)}" stroke-width="${i % 3 === 0 ? 5 : 2.5}" stroke-linecap="round" />`;
+  }).join('');
+  const ma = m * 6, ha = (h % 12) * 30 + m * 0.5;
+  const nums = [[12, 100, 52], [3, 150, 107], [6, 100, 160], [9, 50, 107]].map(([t, x, y]) => `<text x="${x}" y="${y}" text-anchor="middle" font-size="17" font-weight="700">${t}</text>`).join('');
+  const box = h2('div', 'clock');
+  box.innerHTML = `<svg viewBox="0 0 200 200" width="190" height="190" role="img" aria-label="${fmtClock(h, m)}">
+    <circle cx="100" cy="100" r="94" class="face" stroke-width="3"/>
+    <g class="ticks">${ticks}</g><g class="nums">${nums}</g>
+    <line x1="100" y1="100" x2="${100 + 48 * Math.sin((ha * Math.PI) / 180)}" y2="${100 - 48 * Math.cos((ha * Math.PI) / 180)}" class="hour" stroke-width="8" stroke-linecap="round"/>
+    <line x1="100" y1="100" x2="${100 + 72 * Math.sin((ma * Math.PI) / 180)}" y2="${100 - 72 * Math.cos((ma * Math.PI) / 180)}" class="min" stroke-width="5" stroke-linecap="round"/>
+    <circle cx="100" cy="100" r="6" class="pin"/></svg>`;
+  return box;
+}
+const h2 = (tag, cls) => { const e = document.createElement(tag); e.className = cls; return e; };
+
+function renderNum(step, api) {
+  const n = step.n;
+  const isPrice = step.mode === 'price' || step.mode === 'priceListen';
+  const text = isPrice ? priceTr(n) : numberTr(n);
+  const shown = isPrice ? fmtPrice(n) : n.toLocaleString('ko-KR');
+  const el = h('div', { class: 'ex' });
+  const result = { answer: `${shown} — ${text}`, speakText: text };
+  if (step.mode === 'listen' || step.mode === 'priceListen') {
+    const audio = canListen();
+    el.append(
+      h('div', { class: 'ex-label' }, icon('headphones', 16), audio ? '듣고 숫자로 쓰세요' : '읽고 숫자로 쓰세요'),
+      audio ? h('div', { class: 'play-row' }, speakBtn(text, { size: 'xl' }), speakBtn(text, { size: 'xl', slow: true })) : h('div', { class: 'ex-q' }, text),
+    );
+    const input = h('input', { class: 'type-input', inputmode: 'decimal', autocomplete: 'off', placeholder: isPrice ? '예: 45,50' : '숫자 입력', 'aria-label': '숫자 입력', style: { textAlign: 'center', fontSize: '26px' } });
+    input.addEventListener('input', () => api.setReady(input.value.trim().length > 0));
+    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); api.trigger(); } });
+    el.append(input);
+    return {
+      el,
+      onShow: () => { if (audio) speak(text); setTimeout(() => input.focus({ preventScroll: true }), 120); },
+      check() {
+        input.disabled = true;
+        let ok;
+        if (isPrice) {
+          const v = Number(input.value.replace(/\s|TL|lira/gi, '').replace(/\.(?=\d{3}\b)/g, '').replace(',', '.'));
+          ok = Math.abs(v - n) < 0.001;
+        } else ok = input.value.replace(/\D/g, '') === String(n);
+        input.classList.add(ok ? 'ok' : 'bad');
+        return { ok, ...result, mine: ok ? null : input.value };
+      },
+    };
+  }
+  const opts = shuffle([n, ...numDistractors(n, isPrice)]);
+  el.append(
+    h('div', { class: 'ex-label' }, icon('target', 16), isPrice ? '가격을 튀르키예어로' : '튀르키예어로 읽으면?'),
+    h('div', { class: 'word-xl', style: { fontVariantNumeric: 'tabular-nums' } }, shown),
+  );
+  const core = mcCore({ el, items: opts.map((x) => ({ label: isPrice ? priceTr(x) : numberTr(x) })), correctIdx: opts.indexOf(n), result, onCorrectSpeak: text }, api);
+  return { el, ...core };
+}
+
+function renderClock(step, api) {
+  const { h: H, m: M } = step;
+  const say = timeTr(H, M);
+  const at = timeAtTr(H, M);
+  const cands = [];
+  const push = (hh, mm) => {
+    hh = ((hh - 1 + 12) % 12) + 1;
+    mm = ((mm % 60) + 60) % 60;
+    if (!(hh === H && mm === M) && !cands.some(([a, b2]) => a === hh && b2 === mm)) cands.push([hh, mm]);
+  };
+  if (M !== 0 && M !== 30) push(H, 60 - M);
+  push(H + 1, M); push(H - 1, M); push(H, M + 5); push(H, M - 5);
+  const picks = shuffle([[H, M], ...shuffle(cands).slice(0, 3)]);
+  const correctIdx = picks.findIndex(([a, b2]) => a === H && b2 === M);
+  const el = h('div', { class: 'ex ex-center' });
+  if (step.mode === 'listen') {
+    const audio = canListen();
+    el.append(
+      h('div', { class: 'ex-label' }, icon('headphones', 16), audio ? '듣고 시각을 고르세요' : '읽고 시각을 고르세요'),
+      audio ? h('div', { class: 'play-row' }, speakBtn(say, { size: 'xl' }), speakBtn(say, { size: 'xl', slow: true })) : h('div', { class: 'ex-q' }, say),
+    );
+    const core = mcCore({ el, items: picks.map(([a, b2]) => ({ label: fmtClock(a, b2) })), correctIdx, result: { answer: `${fmtClock(H, M)} — ${say}`, speakText: say } }, api);
+    el.querySelector('.options')?.classList.add('two-col');
+    return { el, onShow: () => { if (audio) speak(say); }, ...core };
+  }
+  const isAt = step.mode === 'at';
+  el.append(
+    h('div', { class: 'ex-label' }, icon('clock', 16), isAt ? 'Saat kaçta? · 몇 시에 만날까요?' : 'Saat kaç? · 몇 시예요?'),
+    clockSVG(H, M),
+    h('div', { class: 'bold', style: { fontSize: '22px', fontVariantNumeric: 'tabular-nums' } }, isAt ? `${fmtClock(H, M)}에 만나요` : fmtClock(H, M)),
+  );
+  const fn = isAt ? timeAtTr : timeTr;
+  const why = M === 0 || M === 30 ? '정각은 그대로, 30분은 buçuk' : M < 30 ? `30분 전: 시를 <b>목적격</b>으로 + ${isAt ? 'geçe' : 'geçiyor'}` : `30분 후: <b>다음 시</b>를 여격으로 + ${isAt ? 'kala' : 'var'}`;
+  const core = mcCore({ el, items: picks.map(([a, b2]) => ({ label: fn(a, b2) })), correctIdx, result: { answer: isAt ? at : say, speakText: isAt ? at : say, why } }, api);
+  return { el, ...core };
+}
+
 // ---------- 형태소 드릴 설정 화면 ----------
 function setupScreen(root, id, d, go, start) {
-  const cfg = { mode: 'mix', level: 1, tenses: ['prog', 'past'], ...(state.drills[id]?.cfg || {}) };
+  const cfg = { mode: 'mix', level: 1, tenses: ['prog', 'past'], ...(d.defaults || {}), ...(state.drills[id]?.cfg || {}) };
   const save = () => { (state.drills[id] ||= { best: 0, n: 0 }).cfg = { ...cfg }; commit(); };
   const body = h('div', { class: 'col', style: { gap: '18px' } });
   const seg = (key, opts) => {
@@ -207,10 +366,12 @@ function setupScreen(root, id, d, go, start) {
   setKids(body,
     h('div', { class: 'center' }, h('div', { style: { fontSize: '52px' } }, d.emoji), h('h1', { class: 'mt-8' }, d.title), h('p', { class: 'text-2 mt-4' }, d.desc)),
     h('div', { class: 'card flat' }, h('div', { class: 'small muted bold' }, '예시 문제'), h('div', { class: 'bold mt-4', style: { fontSize: '19px' } }, sample1.q), h('div', { class: 'small text-2' }, sample1.sub)),
-    h('div', null, h('div', { class: 'bold mb-8', style: { marginBottom: '8px' } }, '답하는 방식'), seg('mode', [['mc', '객관식'], ['mix', '섞어서'], ['type', '직접 쓰기']])),
+    ...(d.settings
+      ? d.settings.map((s) => h('div', null, h('div', { class: 'bold', style: { marginBottom: '8px' } }, s.label), seg(s.key, s.opts)))
+      : [h('div', null, h('div', { class: 'bold', style: { marginBottom: '8px' } }, '답하는 방식'), seg('mode', [['mc', '객관식'], ['mix', '섞어서'], ['type', '직접 쓰기']]))]),
     d.levels ? h('div', null, h('div', { class: 'bold', style: { marginBottom: '8px' } }, '난이도'), seg('level', [[1, '격어미만'], [2, '소유 + 격어미']])) : null,
     d.tenses ? h('div', null, h('div', { class: 'bold', style: { marginBottom: '8px' } }, '연습할 시제'), tenseBox, h('p', { class: 'small muted mt-8' }, '처음엔 현재진행·과거부터, 단원을 진행하며 하나씩 늘려 보세요.')) : null,
-    h('a', { class: 'small', href: `#/grammar/${d.note}` }, '📖 관련 문법 노트 보기'),
+    d.note ? h('a', { class: 'small', href: `#/grammar/${d.note}` }, '📖 관련 문법 노트 보기') : null,
   );
   const startBtn = h('button', { class: 'btn btn-primary btn-lg btn-block', type: 'button', onclick: () => start(cfg) }, '시작하기 (15문제)');
   root.replaceChildren(h('div', { class: 'stage' },
@@ -246,7 +407,9 @@ export default {
     let cleanup = null;
     const begin = (cfg) => {
       let steps;
-      if (d.morph) {
+      if (d.gen) {
+        steps = Array.from({ length: 15 }, (_, i) => d.gen(Math.random, cfg, i));
+      } else if (d.morph) {
         steps = Array.from({ length: 15 }, (_, i) => {
           const item = d.make(Math.random, cfg);
           const mode = cfg.mode === 'mix' ? (i % 3 === 2 ? 'type' : 'mc') : cfg.mode;
@@ -262,7 +425,7 @@ export default {
       root.replaceChildren();
       cleanup = runSession(root, {
         steps,
-        renderers: { pair: renderPair, morph: renderMorph },
+        renderers: { pair: renderPair, morph: renderMorph, num: renderNum, clock: renderClock },
         requeue: id !== 'pairs',
         onExit: () => go('#/practice'),
         onFinish: (sum) => {
@@ -283,14 +446,14 @@ export default {
               { v: fmtDuration(sum.ms), k: '시간', cls: 'brand' },
             ],
             buttons: [
-              { label: '한 번 더', cls: 'btn-primary', onClick: () => (d.morph ? begin(cfg) : go(`#/drill/${id}`)) },
+              { label: '한 번 더', cls: 'btn-primary', onClick: () => (d.morph || d.gen ? begin(cfg) : go(`#/drill/${id}`)) },
               { label: '연습 목록', onClick: () => go('#/practice') },
             ],
           });
         },
       });
     };
-    if (d.morph) setupScreen(root, id, d, go, begin);
+    if (d.morph || d.gen) setupScreen(root, id, d, go, begin);
     else begin({});
     return () => cleanup?.();
   },

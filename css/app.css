@@ -468,7 +468,7 @@ button.list-item:active, a.list-item:active { background: var(--surface-2); }
 /* ---------- 문제 공통 ---------- */
 .ex { display: flex; flex-direction: column; gap: 18px; animation: fadeIn .35s var(--ease); }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
-.ex-label { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 800; letter-spacing: .02em; color: var(--brand-strong); text-transform: uppercase; }
+.ex-label { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 800; letter-spacing: .02em; color: var(--brand-strong); }
 .ex-label.new { color: var(--violet); }
 .ex-q { font-size: 20px; font-weight: 750; letter-spacing: -.02em; line-height: 1.4; }
 .ex-prompt { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
@@ -754,6 +754,14 @@ select.select { height: 40px; border-radius: 10px; border: 1px solid var(--borde
 .ex-line .ex-tr { font-weight: 700; }
 .ex-line .ex-ko { font-size: 14px; color: var(--text-2); }
 .ex-line .ex-gloss { font-size: 13px; color: var(--muted); margin-top: 2px; }
+
+.clock { color: var(--text); }
+.clock .face { fill: var(--surface); stroke: var(--border); }
+.clock .ticks line { stroke: var(--text-2); }
+.clock .nums text { fill: var(--text-2); }
+.clock .hour { stroke: var(--text); }
+.clock .min { stroke: var(--brand); }
+.clock .pin { fill: var(--brand); }
 
 /* 형태소 색상 */
 .m { font-weight: 800; }

@@ -28,6 +28,7 @@ mantı | 만트(튀르키예식 만두) | n | Mantı Kore mandusuna benziyor. | 
 dolma | 돌마(속을 채운 채소 요리) | n | Biber dolması çok güzel. | 고추 돌마가 정말 맛있어요.
 salata | 샐러드 | n | Çoban salatası taze ve hafif. | 목동 샐러드는 신선하고 가벼워요.
 meyve | 과일 | n | Her gün meyve yerim. | 저는 매일 과일을 먹어요.
+sebze | 채소 | n | Her gün sebze ye. | 매일 채소를 먹어.
 elma | 사과 | n | Bir kilo elma kaç lira? | 사과 1킬로에 몇 리라예요?
 portakal | 오렌지 | n | Portakal çok tatlı. | 오렌지가 아주 달아요.
 muz | 바나나 | n | Maymun muz yiyor. | 원숭이가 바나나를 먹고 있어요.

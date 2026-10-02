@@ -102,6 +102,7 @@ denemek | 시도하다, 입어 보다 | v | Bunu deneyebilir miyim? | 이거 입
 değiştirmek | 바꾸다 | v | Para değiştirmek istiyorum. | 환전하고 싶어요.
 anlatmak | 설명하다, 이야기하다 | v | Bana Kore'yi anlat. | 나한테 한국 얘기 해 줘.
 göstermek | 보여 주다 | v | Yolu gösterebilir misiniz? | 길 좀 알려 주실 수 있어요?
+benzemek | 닮다, 비슷하다 | v | Annene çok benziyorsun. | 너 엄마를 많이 닮았구나. | | 여격 -e를 써요: annene benzemek(엄마를 닮다).
 korkmak | 무서워하다 | v | Köpeklerden korkarım. | 저는 개를 무서워해요. | | 탈격 -den을 써요: köpekten korkmak(개로부터 무서워하다).
 özlemek | 그리워하다 | v | Seni çok özledim. | 너무 보고 싶었어. | | '보고 싶다'를 이렇게 말해요: Seni özledim!
 ağrımak | 아프다(통증) | v | Başım ağrıyor. | 머리가 아파요.

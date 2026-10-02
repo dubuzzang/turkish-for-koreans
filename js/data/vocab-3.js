@@ -36,6 +36,7 @@ ilaç | 약 | n | Bu ilacı günde üç kez için. | 이 약은 하루 세 번 �
 randevu | (진료·만남) 예약 | n | Doktordan randevu aldım. | 의사 진료 예약을 잡았어요.
 sağlık | 건강 | n | Sağlık her şeyden önemli. | 건강이 무엇보다 중요해요.
 reçete | 처방전 | n | Reçeteniz var mı? | 처방전 있으세요?
+uyku | 잠 | n | Uykum var. | 졸려요. | | Uykum var = 내 잠이 있다 → 졸려요!
 `,
 
   clothes: `

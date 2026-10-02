@@ -2,6 +2,7 @@
 // items: 문법 확인(객관식) — a는 정답 인덱스(화면에서는 섞어서 보여줌)
 
 import { UNITS2 } from './curriculum-2.js';
+import { UNITS3 } from './curriculum-3.js';
 
 const b = (s) => `<b class="tr">${s}</b>`;
 
@@ -290,7 +291,7 @@ const UNITS1 = [
     ],
   },
   {
-    id: 'u4', no: 4, title: '숫자와 쇼핑', tr: 'Sayılar ve alışveriş', color: '#e2700c', notes: ['accusative'],
+    id: 'u4', no: 4, title: '숫자와 쇼핑', tr: 'Sayılar ve alışveriş', color: '#e2700c', notes: ['numbers', 'accusative'],
     desc: '숫자 0~1000, 가격 묻기, 흥정, 시장 표현, 목적격 맛보기',
     lessons: [
       {
@@ -473,7 +474,7 @@ const UNITS1 = [
   },
 ];
 
-export const UNITS = [...UNITS1, ...UNITS2];
+export const UNITS = [...UNITS1, ...UNITS2, ...UNITS3];
 export const LESSONS = UNITS.flatMap((u) => u.lessons.map((l, i) => ({ ...l, unit: u, idx: i })));
 export const LESSON = new Map(LESSONS.map((l) => [l.id, l]));
 export const unitOf = (lessonId) => LESSON.get(lessonId)?.unit;

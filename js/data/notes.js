@@ -1,8 +1,10 @@
+import { NOTES2 } from './notes-2.js';
+
 // 문법 노트 — 한국어와 비교하며 설명. 섹션 종류: p(문단) h(소제목) table ex(예문) tip(한국어 비교) warn(흔한 실수) drill(연습 링크)
 const t = (s) => `<span class="tr">${s}</span>`;
 const m = (s, k) => `<span class="m m-${k}">${s}</span>`;
 
-export const NOTES = [
+const NOTES1 = [
   {
     id: 'overview', title: '튀르키예어와 한국어', sub: '닮은 점과 다른 점',
     sections: [
@@ -408,4 +410,5 @@ export const NOTES = [
   },
 ];
 
+export const NOTES = [...NOTES1, ...NOTES2];
 export const NOTE = new Map(NOTES.map((n) => [n.id, n]));

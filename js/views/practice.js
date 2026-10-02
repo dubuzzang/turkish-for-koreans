@@ -5,7 +5,7 @@ import { canListen } from './lesson.js';
 
 const TINT = {
   quiz: '#f0a020', listen: '#2b72e8', build: '#7356f0', type: '#0e9f9a', dictation: '#d63f7f', pairs: '#e5484d', weak: '#e2700c',
-  harmony: '#0891b2', cases: '#2b72e8', poss: '#e2700c', copula: '#d63f7f', conj: '#15a34a',
+  harmony: '#0891b2', cases: '#2b72e8', poss: '#e2700c', copula: '#d63f7f', conj: '#15a34a', numbers: '#a16207', time: '#0f766e',
 };
 
 function drillList(items, audio) {
@@ -38,6 +38,8 @@ export default {
       ),
       h('div', { class: 'section-head' }, h('div', { class: 'section-title' }, '단어·듣기·문장')),
       drillList(DRILL_LIST.filter((d) => d.group === 'vocab'), audio),
+      h('div', { class: 'section-head mt-24' }, h('div', { class: 'section-title' }, '숫자·시간')),
+      drillList(DRILL_LIST.filter((d) => d.group === 'num'), audio),
       h('div', { class: 'section-head mt-24' }, h('div', { class: 'section-title' }, '문법 드릴'), h('a', { class: 'section-link', href: '#/grammar' }, '문법 노트')),
       h('p', { class: 'small text-2', style: { margin: '-4px 2px 10px' } }, '어미가 붙는 규칙을 몸에 익히는 무한 문제 — 정답 뒤에 형태소가 색깔별로 풀이돼요.'),
       drillList(DRILL_LIST.filter((d) => d.group === 'grammar'), audio),

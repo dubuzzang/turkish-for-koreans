@@ -132,6 +132,8 @@ bilgi | 정보, 지식 | n | Daha fazla bilgi alabilir miyim? | 정보를 더 �
 örnek | 예, 예시 | n | Bir örnek verir misiniz? | 예를 하나 들어 주실래요?
 fikir | 생각, 아이디어 | n | Çok iyi bir fikir! | 정말 좋은 생각이야! | drop
 sorun | 문제 | n | Sorun yok! | 문제없어요!
+plan | 계획 | n | Hafta sonu için bir planın var mı? | 주말 계획 있어?
+dikkat | 주의, 조심 | n | Dikkat et, araba geliyor! | 조심해, 차 와! | front hard | dikkat etmek = 조심하다, 주의하다
 `,
 
   hobbies: `

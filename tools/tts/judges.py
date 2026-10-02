@@ -91,6 +91,52 @@ class CTC:
             outs.append(self.proc.decode(ids))
         return outs
 
+    @torch.no_grad()
+    def nll(self, wavs16, texts):
+        """발음 일치도: 튀르키예어 음향모델이 본 '이 글을 이렇게 읽었을 확률'의 음의 로그(글자당). 낮을수록 원어민 발음에 가깝다."""
+        import torch.nn.functional as F
+        outs = []
+        pad = np.zeros(3200, np.float32)
+        blank = self.proc.tokenizer.pad_token_id
+        for x, t in zip(wavs16, texts):
+            inp = self.proc(np.concatenate([pad, x, pad]), sampling_rate=16000, return_tensors="pt")
+            lp = self.model(inp.input_values.to(self.device).half()).logits.float().log_softmax(-1).transpose(0, 1)
+            s = re.sub(r"[^a-zçğıöşüâîû ]+", " ", tr_lower(t)).strip()
+            s = re.sub(r"\s+", " ", s)
+            ids = [i for i in self.proc.tokenizer(s).input_ids if i != self.proc.tokenizer.unk_token_id]
+            if not ids:
+                outs.append(float("nan"))
+                continue
+            loss = F.ctc_loss(lp, torch.tensor([ids]), torch.tensor([lp.shape[0]]), torch.tensor([len(ids)]),
+                              blank=blank, reduction="sum", zero_infinity=True)
+            outs.append(float(loss) / len(ids))
+        return outs
+
+
+class LangID:
+    """Whisper 언어 판별: 이 소리가 어느 언어로 들리는지 확률 (억양 점검 — 한국어처럼 들리면 P(ko)가 오른다)"""
+
+    def __init__(self):
+        from transformers import WhisperProcessor, WhisperForConditionalGeneration
+        from transformers.models.whisper.tokenization_whisper import LANGUAGES
+        mid = "openai/whisper-large-v3-turbo"
+        self.proc = WhisperProcessor.from_pretrained(mid)
+        self.model = WhisperForConditionalGeneration.from_pretrained(mid, dtype=torch.float16).cuda().eval()
+        tok = self.proc.tokenizer
+        self.codes = [c for c in LANGUAGES if tok.convert_tokens_to_ids(f"<|{c}|>") != tok.unk_token_id]
+        self.ids = torch.tensor([tok.convert_tokens_to_ids(f"<|{c}|>") for c in self.codes]).cuda()
+        self.sot = tok.convert_tokens_to_ids("<|startoftranscript|>")
+
+    @torch.no_grad()
+    def __call__(self, wavs16):
+        outs = []
+        for x in wavs16:
+            feats = self.proc(x, sampling_rate=16000, return_tensors="pt").input_features.cuda().half()
+            logits = self.model(input_features=feats, decoder_input_ids=torch.tensor([[self.sot]]).cuda()).logits[0, -1].float()
+            p = logits[self.ids].softmax(-1)
+            outs.append({c: float(v) for c, v in zip(self.codes, p.tolist())})
+        return outs
+
 
 class Whisper:
     def __init__(self):

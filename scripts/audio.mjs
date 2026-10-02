@@ -61,9 +61,9 @@ const SAY_OVERRIDE = {
   ı: 'ı harfi.', // 모음 ı 한 글자는 소리가 뭉개져서 "ı 글자"라고 읽힌다
 };
 
-/** 합성기에 넣을 글: 숫자는 글자로, 기호 정리, 문장 끝 부호 */
-export function ttsText(text) {
-  const over = SAY_OVERRIDE[audioKey(text)];
+/** 합성기에 넣을 글: 숫자는 글자로, 기호 정리, 문장 끝 부호 (override=false: 짧은 글 대체 없이 — 구글 음성용) */
+export function ttsText(text, { override = true } = {}) {
+  const over = override && SAY_OVERRIDE[audioKey(text)];
   if (over) return over;
   let s = String(text).normalize('NFC')
     .replace(/[“”"«»]/g, '')
@@ -99,7 +99,7 @@ export function collectTexts() {
     const id = audioId(text, voice);
     const cur = items.get(id);
     if (cur) { if (!cur.src.includes(src)) cur.src.push(src); return; }
-    items.set(id, { id, voice, key: audioKey(text), text: String(text), say: ttsText(text), src: [src] });
+    items.set(id, { id, voice, key: audioKey(text), text: String(text), say: ttsText(text), google: ttsText(text, { override: false }), src: [src] });
   };
   const sentenceTokens = [];
 

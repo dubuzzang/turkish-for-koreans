@@ -22,7 +22,7 @@ export function render() {
 const VERSION = '${version()}';
 const CACHE = \`merhaba-\${VERSION}\`;
 const FONT_CACHE = 'merhaba-fonts-v1';
-const AUDIO_CACHE = 'merhaba-audio-v1'; // 녹음 음성: 버전이 바뀌어도 유지 (파일 이름이 내용마다 다름)
+const AUDIO_CACHE = 'merhaba-audio-v2'; // 녹음 음성: 버전이 바뀌어도 유지 (파일 이름이 내용마다 다름)
 const ASSETS = ${JSON.stringify(assetList(), null, 2)};
 
 self.addEventListener('install', (e) => {

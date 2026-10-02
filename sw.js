@@ -1,8 +1,8 @@
 /* Merhaba 서비스 워커 — scripts/gen-sw.mjs가 만든 파일이에요 (직접 고치지 마세요) */
-const VERSION = '1.5.0';
+const VERSION = '1.6.0';
 const CACHE = `merhaba-${VERSION}`;
 const FONT_CACHE = 'merhaba-fonts-v1';
-const AUDIO_CACHE = 'merhaba-audio-v1'; // 녹음 음성: 버전이 바뀌어도 유지 (파일 이름이 내용마다 다름)
+const AUDIO_CACHE = 'merhaba-audio-v2'; // 녹음 음성: 버전이 바뀌어도 유지 (파일 이름이 내용마다 다름)
 const ASSETS = [
   "./",
   "audio/index.json",

@@ -16,7 +16,7 @@ export function onVoicesChanged(fn) {
 
 // ---------- ① 녹음 음성 ----------
 export const AUDIO_DIR = 'audio/';
-export const AUDIO_CACHE = 'merhaba-audio-v1';
+export const AUDIO_CACHE = 'merhaba-audio-v2'; // 녹음을 새로 만들면(AUDIO_REV) 함께 올린다 — 예전 보관본은 서비스 워커가 지운다
 let index = null; // Set<id> — 불러오기 전에는 null
 let indexBytes = 0;
 let indexPromise = null;

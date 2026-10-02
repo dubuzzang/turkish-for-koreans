@@ -262,6 +262,7 @@ export default {
         h('div', { class: 'bold' }, `Merhaba v${VERSION}`),
         h('div', { class: 'small muted' }, `업데이트 ${RELEASED}`),
         h('p', { class: 'small text-2 mt-8' }, '한국어 화자를 위한 튀르키예어 학습 앱이에요. 한국어와 닮은 문법(어순·조사·모음조화)을 비교하며 배우고, 인출 연습과 간격 반복(FSRS)으로 오래 기억하도록 설계했어요.'),
+        h('p', { class: 'small muted mt-8' }, '발음 음성: ', h('a', { href: 'https://huggingface.co/krmkayabasi/Anka-TTS', target: '_blank', rel: 'noopener' }, 'Anka TTS'), '(튀르키예어 음성 모델, Kerem Kayabaşı, CC BY-NC 4.0)로 만든 AI 음성 — 비상업 학습용'),
         h('div', { class: 'row wrap mt-12' },
           h('a', { class: 'btn btn-outline btn-sm', href: '#/stats' }, '학습 통계'),
           h('a', { class: 'btn btn-outline btn-sm', href: REPO, target: '_blank', rel: 'noopener' }, 'GitHub에서 보기'),

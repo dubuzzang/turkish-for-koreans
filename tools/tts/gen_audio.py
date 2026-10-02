@@ -1,6 +1,10 @@
-"""앱 녹음 음성 일괄 생성: 합성(VoxCPM2 이어 말하기) → 채점(CTC·Whisper) → 재시도 → 후처리 → MP3.
+"""앱 녹음 음성 일괄 생성: 합성 → 채점(CTC·Whisper·UTMOS) → 재시도 → 후처리 → MP3.
 
-  python gen_audio.py [--repo <앱 저장소>] [--limit N] [--src word,example] [--max-tries 5] [--steps 10]
+  python gen_audio.py [--engine anka|vox] [--repo <앱 저장소>] [--limit N] [--src word,example] [--max-tries 5]
+
+엔진
+- anka (기본): Anka-TTS — 튀르키예어 음성으로 미세조정한 F5-TTS, 내장 여성·남성 목소리 (가중치 CC-BY-NC-4.0, 별도 가상환경 ANKA_PY)
+- vox: VoxCPM2 이어 말하기 (voices/f, voices/m 프롬프트) — v1.5.0에서 쓴 방식
 
 - 입력: <repo>/audio-src/texts.json (node scripts/audio.mjs texts)
 - 출력: <repo>/audio/<id>.mp3, 품질 기록 <repo>/audio-src/qa.json
@@ -12,6 +16,13 @@ import soundfile as sf
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 VOICE_DIR = os.path.join(HERE, "voices")
+ANKA_PY = os.environ.get("ANKA_PY", r"C:\Users\jeong\tts-tools\venv-anka\Scripts\python.exe")
+ENGINE = "anka"
+
+
+def ref(it):
+    """엔진에 넣고 채점에 쓰는 글: Anka는 자연스러운 원문 정리본, VoxCPM2는 짧은 글 대체(SAY_OVERRIDE)까지 적용한 글"""
+    return it["google"] if ENGINE == "anka" else it["say"]
 MP3_MOS_DROP = 0.11  # 다듬기·MP3 변환 뒤 UTMOS가 평균적으로 내려가는 폭 (시험 120개 기준)
 
 
@@ -74,7 +85,29 @@ def to_mp3(w, sr, path):
 
 
 # ---------- 단계 ----------
-def stage_gen(items, attempt, work, steps, cfg=2.0):
+def stage_gen_anka(items, attempt, work, jobs_n=2):
+    """Anka 합성은 별도 가상환경 프로세스로, GPU에 여유가 있으면 여러 개를 나란히"""
+    cand = os.path.join(work, "cand")
+    jobs = [{"name": f"{it['id']}_{attempt}", "text": ref(it), "voice": it["voice"], "seed": 1000 + attempt * 7919}
+            for it in items if not os.path.exists(os.path.join(cand, f"{it['id']}_{attempt}.wav"))]
+    if not jobs:
+        return
+    procs = []
+    for k in range(jobs_n):
+        part = jobs[k::jobs_n]
+        if not part:
+            continue
+        jp = os.path.join(work, f"jobs_{attempt}_{k}.json")
+        json.dump(part, open(jp, "w", encoding="utf-8"), ensure_ascii=False)
+        procs.append(subprocess.Popen([ANKA_PY, os.path.join(HERE, "anka_synth.py"), jp, cand]))
+    for p in procs:
+        if p.wait() != 0:
+            raise RuntimeError("Anka 합성 프로세스 실패")
+
+
+def stage_gen(items, attempt, work, steps, cfg=2.0, jobs_n=2):
+    if ENGINE == "anka":
+        return stage_gen_anka(items, attempt, work, jobs_n)
     import torch
     from voxgen import Vox
     v = Vox()
@@ -111,7 +144,7 @@ def stage_judge(items, attempt, work, scores):
     mos = MOS(); ms = mos(x16); free(mos)
     with open(os.path.join(work, "scores.jsonl"), "a", encoding="utf-8") as fp:
         for it, c, w_, d, m in zip(todo, ch, whh, durs, ms):
-            row = {"cand": f"{it['id']}_{attempt}", "ctc": c, "wh": w_, "c_ctc": cer(it["say"], c), "c_wh": cer(it["say"], w_),
+            row = {"cand": f"{it['id']}_{attempt}", "ctc": c, "wh": w_, "c_ctc": cer(ref(it), c), "c_wh": cer(ref(it), w_),
                    "dur": d, "mos": round(m, 3)}
             scores[row["cand"]] = row
             fp.write(json.dumps(row, ensure_ascii=False) + "\n")
@@ -125,14 +158,14 @@ def stage_pick(items, attempt, work, scores, qa, out_dir, max_tries, final=False
     for it in items:
         lo = fresh.get(it["id"], 0)
         cands = [scores[f"{it['id']}_{a}"] | {"attempt": a} for a in range(lo, attempt + 1) if f"{it['id']}_{a}" in scores]
-        ok = [c for c in cands if verdict(it["say"], c["c_ctc"], c["c_wh"], c["dur"])]
+        ok = [c for c in cands if verdict(ref(it), c["c_ctc"], c["c_wh"], c["dur"])]
         status = None
         if ok:
             # 정확히 맞은 후보를 먼저, 그중 자연스러움 점수가 높은 것
             best, status = min(ok, key=lambda c: (badness(c["c_ctc"], c["c_wh"]) > 0.001, -c.get("mos", 0), c["attempt"])), "ok"
         elif attempt + 1 >= max_tries or final:
             best = min(cands, key=lambda c: badness(c["c_ctc"], c["c_wh"]))
-            status = "weak" if min(best["c_ctc"], best["c_wh"]) <= 0.25 and best["dur"] < 0.45 * len(it["say"]) + 1.5 else "fail"
+            status = "weak" if min(best["c_ctc"], best["c_wh"]) <= 0.25 and best["dur"] < 0.45 * len(ref(it)) + 1.5 else "fail"
         if not status:
             continue
         old = prev.get(it["id"])
@@ -141,7 +174,7 @@ def stage_pick(items, attempt, work, scores, qa, out_dir, max_tries, final=False
             qa[it["id"]] = old  # 예전 녹음이 더 낫다
             done += 1
             continue
-        rec = {"text": it["text"], "say": it["say"], "voice": it["voice"], "status": status, "attempt": best["attempt"],
+        rec = {"text": it["text"], "say": ref(it), "voice": it["voice"], "engine": ENGINE, "status": status, "attempt": best["attempt"],
                "c_ctc": round(best["c_ctc"], 3), "c_wh": round(best["c_wh"], 3), "ctc": best["ctc"], "wh": best["wh"]}
         if "mos" in best:
             rec["mos"] = best["mos"]
@@ -161,9 +194,12 @@ def save_qa(path, qa):
 
 
 def main():
+    global ENGINE
     ap = argparse.ArgumentParser()
+    ap.add_argument("--engine", choices=["anka", "vox"], default="anka")
+    ap.add_argument("--jobs", type=int, default=2, help="Anka 합성 프로세스 수 (GPU 메모리 8GB면 2)")
     ap.add_argument("--repo", default=os.path.normpath(os.path.join(HERE, "..", "..")))
-    ap.add_argument("--work", default=os.path.join(HERE, "work"))
+    ap.add_argument("--work", default="", help="후보·채점 기록 폴더 (기본: work/<엔진>)")
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--src", default="")
     ap.add_argument("--per-src", type=int, default=0, help="출처별 앞에서 N개만 (시험용)")
@@ -173,6 +209,8 @@ def main():
     ap.add_argument("--retry-weak", action="store_true", help="weak/fail 판정 문장을 다시 만든다")
     ap.add_argument("--redo", default="", help="이 파일에 적힌 id를 이전 후보 없이 새로 만든다 (qa_voice.py 결과)")
     a = ap.parse_args()
+    ENGINE = a.engine
+    a.work = a.work or os.path.join(HERE, "work", ENGINE)
     redo = set(open(a.redo, encoding="utf-8").read().split()) if a.redo else set()
 
     texts = json.load(open(os.path.join(a.repo, "audio-src", "texts.json"), encoding="utf-8"))["items"]
@@ -181,16 +219,18 @@ def main():
     os.makedirs(out_dir, exist_ok=True)
     os.makedirs(os.path.join(a.work, "cand"), exist_ok=True)
     qa = json.load(open(qa_path, encoding="utf-8")) if os.path.exists(qa_path) else {}
+    ids = {it["id"] for it in texts}
+    qa = {k: v for k, v in qa.items() if k in ids}  # 더 이상 쓰지 않는 글의 기록은 버린다
     scores = {}
     sp = os.path.join(a.work, "scores.jsonl")
     if os.path.exists(sp):
         from judges import cer
-        say = {it["id"]: it["say"] for it in texts}
+        refs = {it["id"]: ref(it) for it in texts}
         for line in open(sp, encoding="utf-8"):
             r = json.loads(line)
             i = r["cand"].rsplit("_", 1)[0]
-            if i in say:  # 채점 규칙이 바뀌었을 수 있으니 저장된 받아쓰기로 다시 계산
-                r["c_ctc"], r["c_wh"] = cer(say[i], r["ctc"]), cer(say[i], r["wh"])
+            if i in refs:  # 채점 규칙이 바뀌었을 수 있으니 저장된 받아쓰기로 다시 계산
+                r["c_ctc"], r["c_wh"] = cer(refs[i], r["ctc"]), cer(refs[i], r["wh"])
             scores[r["cand"]] = r
 
     def need(it):
@@ -198,6 +238,8 @@ def main():
             return True
         if a.retry_weak and qa.get(it["id"], {}).get("status") in ("weak", "fail"):
             return True
+        if it["id"] in qa and qa[it["id"]].get("engine", "vox") != ENGINE:
+            return True  # 다른 엔진으로 만든 녹음은 새로
         return not os.path.exists(os.path.join(out_dir, f"{it['id']}.mp3")) and it["id"] not in qa
     pending = [it for it in texts if need(it) and (not a.src or it["src"][0] in a.src.split(","))]
     if a.per_src:
@@ -223,7 +265,7 @@ def main():
         log(f"기존 후보로 확정 {n}개 · 새로 만들 문장 {len(pending)}개")
     while pending and attempt < first + a.max_tries:
         log(f"[{attempt + 1}회차] 합성 {len(pending)}개")
-        stage_gen(pending, attempt, a.work, a.steps, a.cfg)
+        stage_gen(pending, attempt, a.work, a.steps, a.cfg, a.jobs)
         log(f"[{attempt + 1}회차] 채점")
         stage_judge(pending, attempt, a.work, scores)
         n = stage_pick(pending, attempt, a.work, scores, qa, out_dir, first + a.max_tries,

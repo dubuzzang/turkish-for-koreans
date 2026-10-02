@@ -74,6 +74,6 @@ tools/tts/              녹음 음성 생성·검사 도구(Python) — 자세�
 tests/                  node:test 테스트
 ```
 
-녹음 음성은 [VoxCPM2](https://huggingface.co/openbmb/VoxCPM2)(Apache-2.0)로 만들었습니다. 여성 목소리는 튀르키예어 전용 모델 [FreyaTTS-small](https://github.com/freyavoiceai/FreyaTTS)(Apache-2.0)의 기본 목소리(Leyla)에서 출발했고, 남성 목소리는 음성 디자인으로 만든 가상의 목소리입니다. 사람의 녹음을 가져와 목소리를 복제하지 않았습니다.
+녹음 음성은 튀르키예어 음성 데이터로 학습한 [Anka TTS](https://huggingface.co/krmkayabasi/Anka-TTS)(Kerem Kayabaşı)로 만들었습니다. 내장 남녀 목소리는 AI로 만든 목소리이고 실존 인물의 녹음이나 복제가 아닙니다. Anka의 가중치와 목소리는 **CC BY-NC 4.0**(비상업)이라 이 무료 학습 앱에 쓰고 있으며, 앱을 상업적으로 쓰려면 녹음을 다른 엔진으로 바꾸거나 따로 허락을 받아야 합니다. 이전 버전(v1.5.0)의 녹음은 [VoxCPM2](https://huggingface.co/openbmb/VoxCPM2)(Apache-2.0)로 만들었습니다.
 
 `main` 브랜치에 푸시하면 GitHub Actions가 테스트 후 GitHub Pages로 배포합니다. 버전별 변경 사항은 [CHANGELOG.md](CHANGELOG.md)에 있습니다.

@@ -156,7 +156,7 @@ def stage_pick(items, attempt, work, scores, qa, out_dir, max_tries, final=False
 
 
 def save_qa(path, qa):
-    with open(path, "w", encoding="utf-8") as fp:
+    with open(path, "w", encoding="utf-8", newline="\n") as fp:
         fp.write("{\n" + ",\n".join(f"{json.dumps(k)}: {json.dumps(qa[k], ensure_ascii=False)}" for k in sorted(qa)) + "\n}\n")
 
 

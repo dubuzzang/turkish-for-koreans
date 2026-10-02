@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f4f7f8" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0c1419" media="(prefers-color-scheme: dark)">
+<meta name="description" content="한국인을 위한 튀르키예어(터키어) 학습 앱 — 한국어 조사·어미와 비교하는 문법, 간격 반복(FSRS) 단어 복습, 듣기·말하기 연습, 모바일 최적화">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Merhaba">
+<meta property="og:title" content="Merhaba · 한국인을 위한 튀르키예어">
+<meta property="og:description" content="한국어와 비교하며 배우는 튀르키예어. 발음, 단어, 문법, 회화까지 모바일에서.">
+<meta property="og:type" content="website">
+<title>Merhaba · 한국인을 위한 튀르키예어</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="icon" href="icons/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<!-- 튀르키예어 글자(ı ş ğ İ)는 Inter, 한글은 Pretendard -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400..900&display=swap">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="css/app.css">
+<script>
+  // 테마를 첫 페인트 전에 적용해 깜빡임 방지
+  try {
+    var s = JSON.parse(localStorage.getItem('merhaba-tr.v1') || '{}');
+    var t = s && s.settings && s.settings.theme;
+    if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {}
+</script>
+</head>
+<body>
+<div id="app" class="app">
+  <div class="boot">
+    <div class="boot-logo">Merhaba</div>
+    <div class="boot-sub">한국인을 위한 튀르키예어</div>
+  </div>
+</div>
+<noscript>
+  <p style="padding:24px;font-family:sans-serif">이 앱은 자바스크립트가 필요해요. 브라우저 설정에서 자바스크립트를 켜 주세요.</p>
+</noscript>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

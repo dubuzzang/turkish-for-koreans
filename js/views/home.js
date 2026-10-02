@@ -128,7 +128,7 @@ export default {
     );
 
     const week = h('section', { class: 'section' },
-      h('div', { class: 'section-head' }, h('div', { class: 'section-title' }, '이번 주 학습'), h('div', { class: 'small muted' }, `최고 ${state.streak.best || 0}일 연속`)),
+      h('div', { class: 'section-head' }, h('div', { class: 'section-title' }, '이번 주 학습'), h('a', { class: 'section-link', href: '#/stats' }, '통계 보기')),
       h('div', { class: 'card' }, weekChart()),
     );
 

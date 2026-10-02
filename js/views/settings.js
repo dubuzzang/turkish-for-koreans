@@ -36,6 +36,29 @@ export function voiceGuide() {
   );
 }
 
+function installCard() {
+  const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+  const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const body = h('div', { class: 'card' });
+  if (standalone) {
+    body.append(h('div', { class: 'bold' }, '✅ 앱으로 실행 중이에요'), h('p', { class: 'small text-2 mt-4' }, '한 번 열어 둔 내용은 인터넷 없이도 학습할 수 있어요. (발음 듣기는 기기 음성을 써요)'));
+  } else if (window.__installPrompt) {
+    body.append(
+      h('div', { class: 'bold' }, '📲 홈 화면에 앱으로 설치'),
+      h('p', { class: 'small text-2 mt-4' }, '설치하면 앱처럼 전체 화면으로 열리고, 지하철처럼 인터넷이 약한 곳에서도 학습할 수 있어요.'),
+      h('button', { class: 'btn btn-primary btn-block mt-12', type: 'button', onclick: async () => { const p = window.__installPrompt; window.__installPrompt = null; p.prompt(); await p.userChoice.catch(() => {}); } }, '설치하기'),
+    );
+  } else {
+    body.append(
+      h('div', { class: 'bold' }, '📲 홈 화면에 추가하기'),
+      h('p', { class: 'small text-2 mt-4' }, ios
+        ? 'Safari 아래쪽 공유 버튼(⬆️) → "홈 화면에 추가"를 누르세요. 앱처럼 열리고 오프라인에서도 학습할 수 있어요.'
+        : '브라우저 메뉴(⋮)에서 "앱 설치" 또는 "홈 화면에 추가"를 누르세요. 앱처럼 열리고 오프라인에서도 학습할 수 있어요.'),
+    );
+  }
+  return body;
+}
+
 export default {
   tab: null,
   title: '설정',
@@ -109,6 +132,9 @@ export default {
         field('화면 테마', null, seg('theme', [['auto', '자동'], ['light', '라이트'], ['dark', '다크']])),
       ),
 
+      h('div', { class: 'section-head mt-24' }, h('div', { class: 'section-title' }, '앱 설치·오프라인')),
+      installCard(),
+
       h('div', { class: 'section-head mt-24' }, h('div', { class: 'section-title' }, '데이터')),
       h('div', { class: 'list' },
         h('button', { class: 'list-item', type: 'button', onclick: () => { downloadText(`merhaba-backup-${dayKey()}.json`, exportJSON()); toast('백업 파일을 저장했어요', 'ok'); } },
@@ -132,7 +158,10 @@ export default {
         h('div', { class: 'bold' }, `Merhaba v${VERSION}`),
         h('div', { class: 'small muted' }, `업데이트 ${RELEASED}`),
         h('p', { class: 'small text-2 mt-8' }, '한국어 화자를 위한 튀르키예어 학습 앱이에요. 한국어와 닮은 문법(어순·조사·모음조화)을 비교하며 배우고, 인출 연습과 간격 반복(FSRS)으로 오래 기억하도록 설계했어요.'),
-        h('a', { class: 'btn btn-outline btn-sm mt-12', href: REPO, target: '_blank', rel: 'noopener' }, 'GitHub에서 보기'),
+        h('div', { class: 'row wrap mt-12' },
+          h('a', { class: 'btn btn-outline btn-sm', href: '#/stats' }, '학습 통계'),
+          h('a', { class: 'btn btn-outline btn-sm', href: REPO, target: '_blank', rel: 'noopener' }, 'GitHub에서 보기'),
+        ),
       ),
     );
     return off;

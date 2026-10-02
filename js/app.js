@@ -1,6 +1,6 @@
 // 앱 셸 · 해시 라우터
 import { state, subscribe, streakNow } from './core/store.js';
-import { h, icon, closeAllSheets, whenHistoryIdle } from './core/ui.js';
+import { h, icon, closeAllSheets, whenHistoryIdle, actionBar, toast } from './core/ui.js';
 import { dueCount } from './core/deck.js';
 import { stopSpeaking } from './core/tts.js';
 import home from './views/home.js';
@@ -15,10 +15,11 @@ import settings from './views/settings.js';
 import grammar from './views/grammar.js';
 import talk from './views/talk.js';
 import phrases from './views/phrases.js';
+import stats from './views/stats.js';
 import './views/wordforms.js';
 import { renderOnboarding } from './views/onboarding.js';
 
-const ROUTES = { home, learn, lesson, review, practice, drill, words, alphabet, settings, grammar, talk, phrases };
+const ROUTES = { home, learn, lesson, review, practice, drill, words, alphabet, settings, grammar, talk, phrases, stats };
 const TABS = [
   { id: 'home', label: '홈', icon: 'home' },
   { id: 'learn', label: '학습', icon: 'learn' },
@@ -128,3 +129,28 @@ subscribe(() => {
 });
 window.addEventListener('hashchange', route);
 route();
+
+// ---------- 오프라인(PWA) ----------
+window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); window.__installPrompt = e; });
+window.addEventListener('appinstalled', () => { window.__installPrompt = null; toast('앱으로 설치됐어요! 홈 화면에서 바로 열 수 있어요.', 'ok'); });
+
+const isLocal = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
+if ('serviceWorker' in navigator && (location.protocol === 'https:' ? !isLocal : isLocal && /[?&]sw=1/.test(location.search))) {
+  let refreshing = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (refreshing) return;
+    refreshing = true;
+    location.reload();
+  });
+  navigator.serviceWorker.register('sw.js').then((reg) => {
+    const offer = (worker) => actionBar('새 버전이 준비됐어요 ✨', '업데이트', () => worker.postMessage('SKIP_WAITING'));
+    if (reg.waiting && navigator.serviceWorker.controller) offer(reg.waiting);
+    reg.addEventListener('updatefound', () => {
+      const w = reg.installing;
+      w?.addEventListener('statechange', () => {
+        if (w.state === 'installed' && navigator.serviceWorker.controller) offer(w);
+      });
+    });
+    setInterval(() => reg.update().catch(() => {}), 60 * 60 * 1000);
+  }).catch(() => {});
+}

@@ -114,6 +114,18 @@ export function toast(msg, type = '', ms = 2400) {
   setTimeout(() => { t.classList.add('out'); setTimeout(() => t.remove(), 300); }, ms);
 }
 
+/** 하단 알림 막대 (버튼 1개) */
+export function actionBar(msg, label, onClick) {
+  document.querySelector('.action-bar')?.remove();
+  const bar = h('div', { class: 'action-bar', role: 'status' },
+    h('span', { class: 'grow' }, msg),
+    h('button', { class: 'btn btn-primary btn-sm', type: 'button', onclick: () => { bar.remove(); onClick(); } }, label),
+    h('button', { class: 'icon-btn', type: 'button', 'aria-label': '닫기', onclick: () => bar.remove() }, icon('x', 18)),
+  );
+  document.body.append(bar);
+  return bar;
+}
+
 // ---------- 바텀 시트 ----------
 // 열면 history에 한 칸을 쌓아, 휴대폰 '뒤로' 버튼이 화면 이동 대신 시트를 닫게 한다.
 const sheetStack = [];

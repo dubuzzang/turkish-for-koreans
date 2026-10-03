@@ -9,8 +9,9 @@ const list = (dir) => readdirSync(join(ROOT, dir)).flatMap((f) => {
   return statSync(join(ROOT, p)).isDirectory() ? list(p) : [p.replace(/\\/g, '/')];
 });
 
+// 'index.html'은 넣지 않는다: Cloudflare Pages는 /index.html을 /로 리디렉션해서, 리디렉션된 응답을 페이지 열기에 쓰면 ERR_FAILED가 난다
 export function assetList() {
-  return ['./', 'index.html', 'manifest.webmanifest', 'audio/index.json', ...list('css'), ...list('js'), ...list('icons').filter((f) => /\.(png|svg)$/.test(f))].sort();
+  return ['./', 'manifest.webmanifest', 'audio/index.json', ...list('css'), ...list('js'), ...list('icons').filter((f) => /\.(png|svg)$/.test(f))].sort();
 }
 
 export function version() {
@@ -25,9 +26,16 @@ const FONT_CACHE = 'merhaba-fonts-v1';
 const AUDIO_CACHE = 'merhaba-audio-v2'; // 녹음 음성: 버전이 바뀌어도 유지 (파일 이름이 내용마다 다름)
 const ASSETS = ${JSON.stringify(assetList(), null, 2)};
 
+// 새 버전은 기다리지 않고 바로 적용한다 (앱은 레슨 중이면 다음 화면으로 넘어갈 때 새로 고친다)
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS.map((u) => new Request(u, { cache: 'reload' })))));
+  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS.map((u) => new Request(u, { cache: 'reload' })))).then(() => self.skipWaiting()));
 });
+
+// 리디렉션을 거친 응답은 페이지 열기(navigate)에 그대로 쓸 수 없어서 깨끗한 응답으로 바꾼다
+async function clean(res) {
+  if (!res || !res.redirected) return res;
+  return new Response(await res.blob(), { status: res.status, statusText: res.statusText, headers: res.headers });
+}
 
 self.addEventListener('activate', (e) => {
   e.waitUntil((async () => {
@@ -82,7 +90,16 @@ self.addEventListener('fetch', (e) => {
       return;
     }
     if (req.mode === 'navigate') {
-      e.respondWith(caches.match('index.html').then((hit) => hit || fetch(req)));
+      e.respondWith((async () => {
+        const hit = await caches.match('./', { cacheName: CACHE });
+        if (hit) return clean(hit);
+        try {
+          return await fetch(req);
+        } catch {
+          const any = await caches.match('./');
+          return any ? clean(any) : Response.error();
+        }
+      })());
       return;
     }
     e.respondWith(caches.match(req, { ignoreSearch: true }).then((hit) => hit || fetch(req)));

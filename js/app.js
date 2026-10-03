@@ -1,6 +1,6 @@
 // 앱 셸 · 해시 라우터
 import { state, subscribe, streakNow } from './core/store.js';
-import { h, icon, closeAllSheets, whenHistoryIdle, actionBar, toast } from './core/ui.js';
+import { h, icon, closeAllSheets, whenHistoryIdle, toast } from './core/ui.js';
 import { dueCount } from './core/deck.js';
 import { stopSpeaking } from './core/tts.js';
 import home from './views/home.js';
@@ -159,21 +159,20 @@ window.addEventListener('appinstalled', () => { window.__installPrompt = null; t
 
 const isLocal = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
 if ('serviceWorker' in navigator && (location.protocol === 'https:' ? !isLocal : isLocal && /[?&]sw=1/.test(location.search))) {
+  // 새 버전은 서비스 워커가 바로 적용한다. 처음 설치될 때는 새로 고칠 필요가 없고,
+  // 레슨·연습 중이면 끊지 않고 다음 화면으로 넘어갈 때 새로 고친다.
   let refreshing = false;
+  const hadController = !!navigator.serviceWorker.controller;
   navigator.serviceWorker.addEventListener('controllerchange', () => {
-    if (refreshing) return;
+    if (refreshing || !hadController) return;
     refreshing = true;
-    location.reload();
+    if (document.body.classList.contains('immersive')) {
+      toast('새 버전이 준비됐어요 — 이 학습을 마치면 적용돼요');
+      window.addEventListener('hashchange', () => location.reload(), { once: true });
+    } else location.reload();
   });
   navigator.serviceWorker.register('sw.js').then((reg) => {
-    const offer = (worker) => actionBar('새 버전이 준비됐어요 ✨', '업데이트', () => worker.postMessage('SKIP_WAITING'));
-    if (reg.waiting && navigator.serviceWorker.controller) offer(reg.waiting);
-    reg.addEventListener('updatefound', () => {
-      const w = reg.installing;
-      w?.addEventListener('statechange', () => {
-        if (w.state === 'installed' && navigator.serviceWorker.controller) offer(w);
-      });
-    });
+    reg.waiting?.postMessage('SKIP_WAITING'); // 예전 버전이 남긴 대기 중인 워커
     setInterval(() => reg.update().catch(() => {}), 60 * 60 * 1000);
   }).catch(() => {});
 }
